@@ -219,19 +219,6 @@
             top: 10px;
             z-index: 100;
         }
-        .screenshot-gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin: 15px 0;
-        }
-        .screenshot-item {
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
-            background: #f8f9fa;
-            text-align: center;
-        }
         .monitoring-active {
             background: #ff4444 !important;
             animation: pulse 2s infinite;
@@ -240,6 +227,13 @@
             0% { background-color: #ff4444; }
             50% { background-color: #ff6666; }
             100% { background-color: #ff4444; }
+        }
+        .student-answers {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #3498db;
         }
         @media (max-width: 768px) {
             .container {
@@ -371,22 +365,16 @@
         const PROFESSOR_PASSWORD = "professor123"; // Change this password
         const TESTS_KEY = 'english_tests_cloud';
         const RESULTS_KEY = 'english_results_cloud';
-        const SCREENSHOT_INTERVAL = 30000; // 30 seconds
 
         // Initialize
         let currentQuestions = [];
         let currentTest = null;
         let studentAnswers = {};
         let monitoringData = {};
-        let screenshotInterval;
-        let shareLinkGenerated = false;
 
         // ==================== CLOUD STORAGE SOLUTION ====================
         
-        function saveTestToCloud(test) {
-            const tests = getTestsFromCloud();
-            tests[test.id] = test;
-            
+        function saveAllTestsToCloud(tests) {
             // Save to both URL and localStorage
             const testsString = btoa(JSON.stringify(tests));
             const newUrl = window.location.origin + window.location.pathname + '?tests=' + encodeURIComponent(testsString);
@@ -427,7 +415,10 @@
 
         function updateShareLink() {
             const tests = getTestsFromCloud();
-            if (Object.keys(tests).length === 0) return;
+            if (Object.keys(tests).length === 0) {
+                document.getElementById('shareSection').style.display = 'none';
+                return;
+            }
 
             const testsString = btoa(JSON.stringify(tests));
             const shareUrl = window.location.origin + window.location.pathname + '?tests=' + encodeURIComponent(testsString);
@@ -744,7 +735,9 @@
             };
 
             // Save to cloud storage
-            saveTestToCloud(test);
+            const tests = getTestsFromCloud();
+            tests[testId] = test;
+            saveAllTestsToCloud(tests);
             
             alert('✅ Test saved successfully! Access code: ' + code);
             currentQuestions = [];
@@ -794,16 +787,7 @@
                 if (tests[testId]) {
                     delete tests[testId];
                     // Save remaining tests to cloud
-                    if (Object.keys(tests).length > 0) {
-                        const firstTest = tests[Object.keys(tests)[0]];
-                        saveTestToCloud(firstTest);
-                    } else {
-                        // If no tests left, clear everything
-                        localStorage.removeItem(TESTS_KEY);
-                        const newUrl = window.location.origin + window.location.pathname;
-                        window.history.replaceState({}, '', newUrl);
-                        document.getElementById('shareSection').style.display = 'none';
-                    }
+                    saveAllTestsToCloud(tests);
                     loadTestsList();
                     alert('Test deleted successfully!');
                 }
@@ -837,19 +821,17 @@
             currentTest = test;
             studentAnswers = {};
             
-            // Initialize monitoring
+            // Initialize monitoring (ONLY tab switching detection)
             monitoringData = {
                 studentName: studentName,
                 testCode: testCode,
                 testTitle: test.title,
                 startTime: new Date().toISOString(),
                 tabSwitches: 0,
-                focusLoss: 0,
-                screenshots: [],
                 answers: {}
             };
 
-            console.log('Starting test with monitoring...');
+            console.log('Starting test with tab switching monitoring...');
             
             // Start monitoring
             startMonitoring();
@@ -857,22 +839,9 @@
         }
 
         function startMonitoring() {
-            // Clear any existing interval
-            if (screenshotInterval) {
-                clearInterval(screenshotInterval);
-            }
-
-            // Tab switch detection
+            // Tab switch detection only
             document.addEventListener('visibilitychange', handleVisibilityChange);
             
-            // Focus loss detection
-            window.addEventListener('blur', handleFocusLoss);
-            
-            // Periodic screenshots
-            screenshotInterval = setInterval(() => {
-                takeScreenshot('periodic');
-            }, SCREENSHOT_INTERVAL);
-
             // Add visual indicator that monitoring is active
             const studentTab = document.querySelector('.tab[onclick="showTab(\'student\')"]');
             studentTab.classList.add('monitoring-active');
@@ -881,30 +850,14 @@
         function handleVisibilityChange() {
             if (document.hidden) {
                 monitoringData.tabSwitches++;
-                takeScreenshot('tab_switch');
                 console.log(`Tab switched! Total switches: ${monitoringData.tabSwitches}`);
+                
+                // Update display if available
+                const tabSwitchElement = document.getElementById('tabSwitchCount');
+                if (tabSwitchElement) {
+                    tabSwitchElement.textContent = monitoringData.tabSwitches;
+                }
             }
-        }
-
-        function handleFocusLoss() {
-            monitoringData.focusLoss++;
-            takeScreenshot('focus_loss');
-            console.log(`Focus lost! Total focus losses: ${monitoringData.focusLoss}`);
-        }
-
-        function takeScreenshot(reason) {
-            // In a real implementation, use html2canvas for actual screenshots
-            // For now, we'll create detailed log entries
-            const screenshot = {
-                timestamp: new Date().toISOString(),
-                reason: reason,
-                tabSwitches: monitoringData.tabSwitches,
-                focusLoss: monitoringData.focusLoss,
-                description: `${reason} at ${new Date().toLocaleTimeString()} - Tab switches: ${monitoringData.tabSwitches}, Focus losses: ${monitoringData.focusLoss}`
-            };
-            
-            monitoringData.screenshots.push(screenshot);
-            console.log(`Screenshot taken: ${reason}`, screenshot);
         }
 
         function renderTestInterface() {
@@ -920,23 +873,15 @@
                     <div class="student-info">
                         <p><strong>Student:</strong> ${monitoringData.studentName}</p>
                         <p><strong>Test Code:</strong> ${monitoringData.testCode}</p>
-                        <p><strong>Monitoring:</strong> <span style="color: red;">ACTIVE</span></p>
+                        <p><strong>Monitoring:</strong> <span style="color: red;">ACTIVE (Tab switching detection)</span></p>
                     </div>
                     <div class="card warning">
-                        <strong>⚠️ MONITORING ACTIVE:</strong> Tab switching, focus changes, and activity are being monitored and recorded!
+                        <strong>⚠️ MONITORING ACTIVE:</strong> Tab switching is being monitored and recorded!
                     </div>
                     <div class="monitoring-stats">
                         <div class="stat-card">
                             <div class="stat-number" id="tabSwitchCount">0</div>
                             <div>Tab Switches</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="focusLossCount">0</div>
-                            <div>Focus Loss</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="screenshotCount">0</div>
-                            <div>Screenshots</div>
                         </div>
                     </div>
                 </div>
@@ -998,20 +943,9 @@
             container.innerHTML += `
                 <div class="card">
                     <button class="btn btn-success" onclick="finishTest()">✅ Submit Test</button>
-                    <p><small>Note: All monitoring data will be saved with your test results</small></p>
+                    <p><small>Note: Tab switching data will be saved with your test results</small></p>
                 </div>
             `;
-
-            // Start updating monitoring display
-            updateMonitoringDisplay();
-        }
-
-        function updateMonitoringDisplay() {
-            setInterval(() => {
-                document.getElementById('tabSwitchCount').textContent = monitoringData.tabSwitches;
-                document.getElementById('focusLossCount').textContent = monitoringData.focusLoss;
-                document.getElementById('screenshotCount').textContent = monitoringData.screenshots.length;
-            }, 1000);
         }
 
         function updateStudentAnswer(questionId, element) {
@@ -1027,23 +961,24 @@
             } else {
                 studentAnswers[questionId] = element.value;
             }
+            console.log('Student answers updated:', studentAnswers);
         }
 
         function updateMatchingAnswer(questionId, pairIndex, value) {
             if (!studentAnswers[questionId]) studentAnswers[questionId] = [];
             studentAnswers[questionId][pairIndex] = value;
+            console.log('Matching answer updated:', studentAnswers);
         }
 
         function updateBlankAnswer(questionId, element) {
             if (!studentAnswers[questionId]) studentAnswers[questionId] = [];
             studentAnswers[questionId].push(element.value);
+            console.log('Blank answer updated:', studentAnswers);
         }
 
         function finishTest() {
             // Stop monitoring
-            clearInterval(screenshotInterval);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
-            window.removeEventListener('blur', handleFocusLoss);
             
             // Remove visual indicator
             const studentTab = document.querySelector('.tab[onclick="showTab(\'student\')"]');
@@ -1053,13 +988,14 @@
             monitoringData.answers = studentAnswers;
 
             console.log('Test finished. Monitoring data:', monitoringData);
+            console.log('Student answers:', studentAnswers);
 
             // Calculate results
             let totalScore = 0;
             let maxScore = 0;
             const details = [];
 
-            currentTest.questions.forEach(question => {
+            currentTest.questions.forEach((question, index) => {
                 maxScore += question.points;
                 let score = calculateQuestionScore(question, studentAnswers[question.id] || []);
                 totalScore += score;
@@ -1080,7 +1016,9 @@
                 score: totalScore,
                 maxScore: maxScore,
                 percentage: Math.round((totalScore / maxScore) * 100),
-                details: details
+                details: details,
+                // Save complete student answers for professor review
+                completeStudentAnswers: studentAnswers
             };
 
             const results = getResults();
@@ -1092,11 +1030,22 @@
 
         function calculateQuestionScore(question, studentAnswer) {
             // Simplified scoring - implement proper logic based on question type
+            // For now, give full points for demonstration
             return question.points; 
         }
 
         function formatStudentAnswer(question, answer) {
-            return Array.isArray(answer) ? answer.join(', ') : (answer || 'No answer');
+            if (Array.isArray(answer)) {
+                if (question.type === 'multiple') {
+                    // For multiple choice, show selected option texts
+                    const selectedOptions = question.choices.filter(choice => 
+                        answer.includes(choice.id.toString())
+                    ).map(choice => choice.text);
+                    return selectedOptions.join(', ');
+                }
+                return answer.join(', ');
+            }
+            return answer || 'No answer';
         }
 
         function getCorrectAnswer(question) {
@@ -1127,38 +1076,9 @@
                             <div class="stat-number">${result.tabSwitches}</div>
                             <div>Tab Switches</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-number">${result.focusLoss}</div>
-                            <div>Focus Loss</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number">${result.screenshots.length}</div>
-                            <div>Screenshots</div>
-                        </div>
                     </div>
                 </div>
             `;
-
-            // Show screenshots if any
-            if (result.screenshots.length > 0) {
-                container.innerHTML += `
-                    <div class="card">
-                        <h3>📸 Activity Monitoring Log</h3>
-                        <div class="screenshot-gallery">
-                            ${result.screenshots.map((shot, index) => `
-                                <div class="screenshot-item">
-                                    <div style="background: #e0e0e0; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 5px; margin-bottom: 5px;">
-                                        📸 ${shot.reason}
-                                    </div>
-                                    <small>${new Date(shot.timestamp).toLocaleTimeString()}</small>
-                                    <br>
-                                    <small>Tabs: ${shot.tabSwitches}</small>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
 
             result.details.forEach((detail, index) => {
                 container.innerHTML += `
@@ -1201,34 +1121,19 @@
                     <h3>${result.studentName} - ${result.testTitle}</h3>
                     <p><strong>Score:</strong> ${result.score}/${result.maxScore} (${result.percentage}%)</p>
                     <p><strong>Date:</strong> ${new Date(result.startTime).toLocaleString()}</p>
+                    <p><strong>Tab Switches:</strong> ${result.tabSwitches}</p>
                     
-                    <div class="monitoring-stats">
-                        <div class="stat-card">
-                            <div class="stat-number">${result.tabSwitches}</div>
-                            <div>Tab Switches</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number">${result.focusLoss}</div>
-                            <div>Focus Loss</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number">${result.screenshots.length}</div>
-                            <div>Screenshots</div>
-                        </div>
+                    <div class="student-answers">
+                        <h4>Student Answers:</h4>
+                        ${result.details.map((detail, qIndex) => `
+                            <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
+                                <strong>Q${qIndex + 1}:</strong> ${detail.question}<br>
+                                <strong>Student Answer:</strong> ${detail.studentAnswer}<br>
+                                <strong>Correct Answer:</strong> ${detail.correctAnswer}<br>
+                                <strong>Score:</strong> ${detail.score}/${detail.maxScore}
+                            </div>
+                        `).join('')}
                     </div>
-
-                    ${result.screenshots.length > 0 ? `
-                        <div class="screenshot-gallery">
-                            ${result.screenshots.slice(0, 3).map(shot => `
-                                <div class="screenshot-item">
-                                    <div style="background: #e0e0e0; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 5px; font-size: 12px;">
-                                        ${shot.reason}
-                                    </div>
-                                    <small>${new Date(shot.timestamp).toLocaleTimeString()}</small>
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : ''}
 
                     <button class="btn" onclick="viewDetailedResult(${index})">📋 View Details</button>
                     <button class="btn btn-danger" onclick="deleteResult(${index})">🗑️ Delete</button>
@@ -1241,14 +1146,15 @@
             const result = results[index];
             
             let details = `Detailed Results:\n\nStudent: ${result.studentName}\nTest: ${result.testTitle}\nScore: ${result.score}/${result.maxScore} (${result.percentage}%)\n\n`;
-            details += `Monitoring Data:\n- Tab Switches: ${result.tabSwitches}\n- Focus Loss: ${result.focusLoss}\n- Screenshots: ${result.screenshots.length}\n\n`;
+            details += `Monitoring Data:\n- Tab Switches: ${result.tabSwitches}\n\n`;
+            details += "Student Answers:\n";
             
-            if (result.screenshots.length > 0) {
-                details += "Screenshot Log:\n";
-                result.screenshots.forEach((shot, i) => {
-                    details += `${i+1}. ${shot.reason} at ${new Date(shot.timestamp).toLocaleTimeString()}\n`;
-                });
-            }
+            result.details.forEach((detail, i) => {
+                details += `\nQ${i+1}. ${detail.question}\n`;
+                details += `   Student: ${detail.studentAnswer}\n`;
+                details += `   Correct: ${detail.correctAnswer}\n`;
+                details += `   Score: ${detail.score}/${detail.maxScore}\n`;
+            });
             
             alert(details);
         }
