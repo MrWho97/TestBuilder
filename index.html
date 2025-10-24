@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TestBuilder - Система тестирования</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .tabs {
+            display: flex;
+            background: #34495e;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: #2c3e50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .tab.active {
+            background: #3498db;
+        }
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .card {
+            background: #f8f9fa;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #3498db;
+        }
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background: #2980b9;
+        }
+        .btn-success {
+            background: #27ae60;
+        }
+        .btn-danger {
+            background: #e74c3c;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .question-card {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border: 2px solid #e3f2fd;
+        }
+        .choice-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        .choice-item input[type="text"] {
+            flex: 1;
+            margin-right: 15px;
+        }
+        .choice-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 TestBuilder - Система тестирования</h1>
+            <p>Создавайте тесты и отслеживайте результаты студентов</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('teacher')">👨‍🏫 Преподаватель</button>
+            <button class="tab" onclick="showTab('student')">👨‍🎓 Студент</button>
+            <button class="tab" onclick="showTab('results')">📊 Результаты</button>
+        </div>
+
+        <div class="tab-content active" id="teacher">
+            <div class="card">
+                <h2>📝 Создание нового теста</h2>
+                <input type="text" id="testTitle" placeholder="Название теста" value="Мой первый тест">
+                
+                <div id="questionsContainer">
+                    <p>Нажмите "➕ Добавить вопрос" чтобы начать создание теста</p>
+                </div>
+                
+                <button class="btn" onclick="addQuestion()">➕ Добавить вопрос</button>
+                <button class="btn btn-success" onclick="saveTest()">💾 Сохранить тест</button>
+            </div>
+
+            <div class="card">
+                <h2>📋 Мои тесты</h2>
+                <div id="testsList">
+                    <p>Здесь появятся сохраненные тесты</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="student">
+            <div class="card">
+                <h2>🎓 Прохождение теста</h2>
+                <input type="text" id="studentName" placeholder="Ваше ФИО" required>
+                <input type="text" id="studentGroup" placeholder="Ваша группа">
+                <select id="testSelect">
+                    <option value="">-- Выберите тест --</option>
+                </select>
+                <button class="btn btn-success" onclick="startTest()">🚀 Начать тест</button>
+            </div>
+
+            <div id="testInterface" style="display: none;">
+                <!-- Здесь будет интерфейс тестирования -->
+            </div>
+        </div>
+
+        <div class="tab-content" id="results">
+            <div class="card">
+                <h2>📊 Результаты студентов</h2>
+                <div id="resultsList">
+                    <p>Здесь появятся результаты тестирования</p>
+                </div>
+                <button class="btn" onclick="exportResults()">📥 Экспорт результатов</button>
+                <button class="btn btn-danger" onclick="clearResults()">🗑️ Очистить все результаты</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // БАЗОВЫЙ ФУНКЦИОНАЛ - ДЛЯ НАЧАЛА РАБОТЫ
+        let currentQuestions = [];
+
+        function showTab(tabName) {
+            // Скрыть все табы
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Показать выбранный таб
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
+        }
+
+        function addQuestion() {
+            const questionId = Date.now();
+            const question = {
+                id: questionId,
+                type: 'multiple',
+                text: 'Введите текст вопроса здесь',
+                points: 1,
+                choices: [
+                    { id: questionId + 1, text: 'Вариант ответа 1', correct: false },
+                    { id: questionId + 2, text: 'Вариант ответа 2', correct: false }
+                ]
+            };
+
+            currentQuestions.push(question);
+            renderQuestions();
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '<h3>📝 Вопросы теста:</h3>';
+
+            if (currentQuestions.length === 0) {
+                container.innerHTML += '<p>Пока нет вопросов. Добавьте первый вопрос!</p>';
+                return;
+            }
+
+            currentQuestions.forEach((question, index) => {
+                const questionHTML = `
+                    <div class="question-card">
+                        <h4>Вопрос ${index + 1}</h4>
+                        <input type="text" value="${question.text}" 
+                               onchange="updateQuestionText(${question.id}, this.value)"
+                               placeholder="Текст вопроса">
+                        
+                        <div style="margin: 15px 0;">
+                            <strong>Варианты ответов:</strong>
+                            ${question.choices.map((choice, choiceIndex) => `
+                                <div class="choice-item">
+                                    <input type="text" value="${choice.text}" 
+                                           onchange="updateChoiceText(${question.id}, ${choice.id}, this.value)"
+                                           placeholder="Текст варианта ответа">
+                                    <input type="checkbox" ${choice.correct ? 'checked' : ''}
+                                           onchange="toggleChoiceCorrect(${question.id}, ${choice.id})">
+                                    <span>Правильный</span>
+                                    <button class="btn btn-danger" onclick="removeChoice(${question.id}, ${choice.id})">🗑️</button>
+                                </div>
+                            `).join('')}
+                            <button class="btn" onclick="addChoice(${question.id})">➕ Добавить вариант</button>
+                        </div>
+
+                        <button class="btn btn-danger" onclick="removeQuestion(${question.id})">🗑️ Удалить вопрос</button>
+                    </div>
+                `;
+                container.innerHTML += questionHTML;
+            });
+        }
+
+        // Функции для работы с вопросами
+        function updateQuestionText(questionId, text) {
+            const question = currentQuestions.find(q => q.id === questionId);
+            if (question) question.text = text;
+        }
+
+        function updateChoiceText(questionId, choiceId, text) {
+            const question = currentQuestions.find(q => q.id === questionId);
+            if (question) {
+                const choice = question.choices.find(c => c.id === choiceId);
+                if (choice) choice.text = text;
+            }
+        }
+
+        function toggleChoiceCorrect(questionId, choiceId) {
+            const question = currentQuestions.find(q => q.id === questionId);
+            if (question) {
+                const choice = question.choices.find(c => c.id === choiceId);
+                if (choice) choice.correct = !choice.correct;
+            }
+        }
+
+        function addChoice(questionId) {
+            const question = currentQuestions.find(q => q.id === questionId);
+            if (question) {
+                question.choices.push({
+                    id: Date.now(),
+                    text: 'Новый вариант ответа',
+                    correct: false
+                });
+                renderQuestions();
+            }
+        }
+
+        function removeChoice(questionId, choiceId) {
+            const question = currentQuestions.find(q => q.id === questionId);
+            if (question) {
+                question.choices = question.choices.filter(c => c.id !== choiceId);
+                renderQuestions();
+            }
+        }
+
+        function removeQuestion(questionId) {
+            currentQuestions = currentQuestions.filter(q => q.id !== questionId);
+            renderQuestions();
+        }
+
+        function saveTest() {
+            const title = document.getElementById('testTitle').value.trim();
+            if (!title) {
+                alert('Введите название теста!');
+                return;
+            }
+            if (currentQuestions.length === 0) {
+                alert('Добавьте хотя бы один вопрос!');
+                return;
+            }
+
+            // Сохраняем в localStorage
+            const tests = JSON.parse(localStorage.getItem('testbuilder_tests') || '{}');
+            const testId = 'test_' + Date.now();
+            tests[testId] = {
+                id: testId,
+                title: title,
+                questions: currentQuestions,
+                createdAt: new Date().toISOString()
+            };
+            localStorage.setItem('testbuilder_tests', JSON.stringify(tests));
+
+            alert('✅ Тест успешно сохранен!');
+            currentQuestions = [];
+            document.getElementById('testTitle').value = 'Мой тест';
+            renderQuestions();
+            loadTestsList();
+        }
+
+        function loadTestsList() {
+            const tests = JSON.parse(localStorage.getItem('testbuilder_tests') || '{}');
+            const container = document.getElementById('testsList');
+            
+            if (Object.keys(tests).length === 0) {
+                container.innerHTML = '<p>📭 Тестов пока нет</p>';
+                return;
+            }
+
+            container.innerHTML = Object.values(tests).map(test => `
+                <div class="card">
+                    <h3>${test.title}</h3>
+                    <p>❓ Вопросов: ${test.questions.length}</p>
+                    <p>📅 Создан: ${new Date(test.createdAt).toLocaleDateString()}</p>
+                    <button class="btn" onclick="loadTest('${test.id}')">✏️ Редактировать</button>
+                    <button class="btn btn-danger" onclick="deleteTest('${test.id}')">🗑️ Удалить</button>
+                </div>
+            `).join('');
+        }
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTestsList();
+            // Добавляем первый вопрос автоматически
+            addQuestion();
+        });
+    </script>
+</body>
+</html>
