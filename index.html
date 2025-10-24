@@ -215,6 +215,31 @@
             padding: 15px;
             border-radius: 8px;
             margin: 15px 0;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+        .screenshot-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .screenshot-item {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background: #f8f9fa;
+            text-align: center;
+        }
+        .monitoring-active {
+            background: #ff4444 !important;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { background-color: #ff4444; }
+            50% { background-color: #ff6666; }
+            100% { background-color: #ff4444; }
         }
         @media (max-width: 768px) {
             .container {
@@ -245,43 +270,60 @@
         </div>
         
         <div class="tabs">
-            <button class="tab active" onclick="showTab('teacher')">👨‍🏫 Teacher</button>
-            <button class="tab" onclick="showTab('student')">👨‍🎓 Student</button>
+            <button class="tab" onclick="showTab('professor')">👨‍🏫 Professor</button>
+            <button class="tab active" onclick="showTab('student')">👨‍🎓 Student</button>
             <button class="tab" onclick="showTab('results')">📊 Results</button>
         </div>
 
-        <div class="tab-content active" id="teacher">
-            <div class="card">
-                <h2>📝 Create New Test</h2>
+        <!-- PROFESSOR TAB (Password Protected) -->
+        <div class="tab-content" id="professor">
+            <div class="password-protected">
+                <h3>🔒 Professor Access Required</h3>
                 <div class="form-group">
-                    <label for="testTitle">Test Title:</label>
-                    <input type="text" id="testTitle" placeholder="Enter test title" value="English Grammar Test">
+                    <label for="professorPassword">Enter Professor Password:</label>
+                    <input type="password" id="professorPassword" placeholder="Enter password to access professor panel">
                 </div>
-                <div class="form-group">
-                    <label for="testCode">Test Access Code (students will need this):</label>
-                    <input type="text" id="testCode" placeholder="Enter access code" value="ENG2024">
-                </div>
-                
-                <div id="questionsContainer">
-                    <!-- Questions will be added here -->
-                </div>
-                
-                <button class="btn" onclick="addQuestion('multiple')">➕ Multiple Choice</button>
-                <button class="btn" onclick="addQuestion('short')">📝 Short Answer</button>
-                <button class="btn" onclick="addQuestion('matching')">🔗 Matching</button>
-                <button class="btn" onclick="addQuestion('fillblank')">📝 Fill in Blanks</button>
-                <button class="btn btn-success" onclick="saveTest()">💾 Save Test</button>
+                <button class="btn" onclick="accessProfessor()">🔓 Access Professor Panel</button>
             </div>
+            
+            <div id="professorContent" style="display: none;">
+                <div id="shareSection" class="share-section" style="display: none;">
+                    <!-- Share link will appear here -->
+                </div>
 
-            <div class="card">
-                <h2>📋 My Tests</h2>
-                <div id="testsList">
-                    <!-- Tests list will appear here -->
+                <div class="card">
+                    <h2>📝 Create New Test</h2>
+                    <div class="form-group">
+                        <label for="testTitle">Test Title:</label>
+                        <input type="text" id="testTitle" placeholder="Enter test title" value="English Grammar Test">
+                    </div>
+                    <div class="form-group">
+                        <label for="testCode">Test Access Code (students will need this):</label>
+                        <input type="text" id="testCode" placeholder="Enter access code" value="ENG2024">
+                    </div>
+                    
+                    <div id="questionsContainer">
+                        <!-- Questions will be added here -->
+                    </div>
+                    
+                    <button class="btn" onclick="addQuestion('multiple')">➕ Multiple Choice</button>
+                    <button class="btn" onclick="addQuestion('short')">📝 Short Answer</button>
+                    <button class="btn" onclick="addQuestion('matching')">🔗 Matching</button>
+                    <button class="btn" onclick="addQuestion('fillblank')">📝 Fill in Blanks</button>
+                    <button class="btn btn-success" onclick="saveTest()">💾 Save Test</button>
+                </div>
+
+                <div class="card">
+                    <h2>📋 My Tests</h2>
+                    <div id="testsList">
+                        <!-- Tests list will appear here -->
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="tab-content" id="student">
+        <!-- STUDENT TAB -->
+        <div class="tab-content active" id="student">
             <div class="card">
                 <h2>🎓 Take a Test</h2>
                 <div class="form-group">
@@ -300,11 +342,12 @@
             </div>
         </div>
 
+        <!-- RESULTS TAB -->
         <div class="tab-content" id="results">
             <div class="password-protected">
-                <h3>🔒 Teacher Access Required</h3>
+                <h3>🔒 Professor Access Required</h3>
                 <div class="form-group">
-                    <label for="teacherPassword">Enter Teacher Password:</label>
+                    <label for="teacherPassword">Enter Professor Password:</label>
                     <input type="password" id="teacherPassword" placeholder="Enter password to view results">
                 </div>
                 <button class="btn" onclick="accessResults()">🔓 Access Results</button>
@@ -325,7 +368,7 @@
 
     <script>
         // Configuration
-        const TEACHER_PASSWORD = "teacher123"; // Change this password
+        const PROFESSOR_PASSWORD = "professor123"; // Change this password
         const TESTS_KEY = 'english_tests_cloud';
         const RESULTS_KEY = 'english_results_cloud';
         const SCREENSHOT_INTERVAL = 30000; // 30 seconds
@@ -336,44 +379,26 @@
         let studentAnswers = {};
         let monitoringData = {};
         let screenshotInterval;
+        let shareLinkGenerated = false;
 
         // ==================== CLOUD STORAGE SOLUTION ====================
         
-        // Use URL parameters to share tests between devices
         function saveTestToCloud(test) {
-            // Get existing tests from URL or localStorage
-            const urlParams = new URLSearchParams(window.location.search);
-            let cloudTests = {};
-            
-            // Try to get from URL first
-            const urlTests = urlParams.get('tests');
-            if (urlTests) {
-                try {
-                    cloudTests = JSON.parse(atob(urlTests));
-                } catch (e) {
-                    console.log('No tests in URL');
-                }
-            }
-            
-            // If no URL, try localStorage as backup
-            if (Object.keys(cloudTests).length === 0) {
-                cloudTests = JSON.parse(localStorage.getItem(TESTS_KEY)) || {};
-            }
-            
-            // Add new test
-            cloudTests[test.id] = test;
+            const tests = getTestsFromCloud();
+            tests[test.id] = test;
             
             // Save to both URL and localStorage
-            const testsString = btoa(JSON.stringify(cloudTests));
-            
-            // Update URL without reloading page
+            const testsString = btoa(JSON.stringify(tests));
             const newUrl = window.location.origin + window.location.pathname + '?tests=' + encodeURIComponent(testsString);
             window.history.replaceState({}, '', newUrl);
             
             // Also save to localStorage as backup
-            localStorage.setItem(TESTS_KEY, JSON.stringify(cloudTests));
+            localStorage.setItem(TESTS_KEY, JSON.stringify(tests));
             
-            return cloudTests;
+            // Update share link
+            updateShareLink();
+            
+            return tests;
         }
 
         function getTestsFromCloud() {
@@ -384,7 +409,6 @@
             if (urlTests) {
                 try {
                     const tests = JSON.parse(atob(urlTests));
-                    // Also update localStorage with URL data
                     localStorage.setItem(TESTS_KEY, JSON.stringify(tests));
                     return tests;
                 } catch (e) {
@@ -401,48 +425,59 @@
             return Object.values(tests).find(test => test.code === code);
         }
 
-        function generateShareLink() {
+        function updateShareLink() {
             const tests = getTestsFromCloud();
-            if (Object.keys(tests).length === 0) {
-                alert('No tests to share! Create a test first.');
-                return;
-            }
-            
+            if (Object.keys(tests).length === 0) return;
+
             const testsString = btoa(JSON.stringify(tests));
             const shareUrl = window.location.origin + window.location.pathname + '?tests=' + encodeURIComponent(testsString);
             
-            // Show share link to user
-            const shareSection = document.createElement('div');
-            shareSection.className = 'share-section';
+            const shareSection = document.getElementById('shareSection');
             shareSection.innerHTML = `
                 <h4>🔗 Share Tests with Students:</h4>
                 <p>Send this link to students so they can access all tests:</p>
-                <input type="text" value="${shareUrl}" readonly style="width: 100%; padding: 10px; margin: 10px 0;">
-                <button class="btn" onclick="copyToClipboard('${shareUrl}')">📋 Copy Link</button>
+                <input type="text" id="shareUrlInput" value="${shareUrl}" readonly style="width: 100%; padding: 10px; margin: 10px 0;">
+                <button class="btn" onclick="copyShareLink()">📋 Copy Link</button>
                 <small>Students need to open this exact link to see the tests</small>
             `;
-            
-            document.getElementById('teacher').prepend(shareSection);
+            shareSection.style.display = 'block';
         }
 
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
+        function copyShareLink() {
+            const input = document.getElementById('shareUrlInput');
+            input.select();
+            navigator.clipboard.writeText(input.value).then(() => {
                 alert('Link copied to clipboard!');
-            }).catch(() => {
-                // Fallback
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                alert('Link copied!');
             });
         }
 
-        // ==================== REST OF THE CODE ====================
+        // ==================== PASSWORD PROTECTION ====================
 
-        // Tab navigation
+        function accessProfessor() {
+            const password = document.getElementById('professorPassword').value;
+            if (password === PROFESSOR_PASSWORD) {
+                document.querySelector('#professor .password-protected').style.display = 'none';
+                document.getElementById('professorContent').style.display = 'block';
+                loadTestsList();
+                updateShareLink();
+            } else {
+                alert('Incorrect password!');
+            }
+        }
+
+        function accessResults() {
+            const password = document.getElementById('teacherPassword').value;
+            if (password === PROFESSOR_PASSWORD) {
+                document.querySelector('#results .password-protected').style.display = 'none';
+                document.getElementById('resultsContent').style.display = 'block';
+                loadResultsList();
+            } else {
+                alert('Incorrect password!');
+            }
+        }
+
+        // ==================== TAB NAVIGATION ====================
+
         function showTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
@@ -450,14 +485,13 @@
             document.getElementById(tabName).classList.add('active');
             document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
 
-            if (tabName === 'teacher') {
+            if (tabName === 'professor' && document.getElementById('professorContent').style.display === 'block') {
                 loadTestsList();
-                // Auto-generate share link when teacher tab opens
-                setTimeout(generateShareLink, 1000);
             }
         }
 
-        // Question management (same as before)
+        // ==================== QUESTION MANAGEMENT ====================
+
         function addQuestion(type = 'multiple') {
             const questionId = Date.now();
             let question = {
@@ -486,9 +520,6 @@
                     break;
                 case 'fillblank':
                     question.text = 'Complete the sentence: The cat sat on the ______.';
-                    question.blanks = [
-                        { id: questionId + 1, answer: 'mat', position: 6 }
-                    ];
                     break;
             }
 
@@ -499,6 +530,11 @@
         function renderQuestions() {
             const container = document.getElementById('questionsContainer');
             container.innerHTML = '<h3>Questions:</h3>';
+
+            if (currentQuestions.length === 0) {
+                container.innerHTML += '<p>No questions yet. Add your first question!</p>';
+                return;
+            }
 
             currentQuestions.forEach((question, index) => {
                 let questionHTML = `
@@ -592,7 +628,7 @@
             });
         }
 
-        // Question editing functions (same as before)
+        // Question editing functions
         function updateQuestionText(id, text) {
             const q = currentQuestions.find(q => q.id === id);
             if (q) q.text = text;
@@ -682,7 +718,8 @@
             renderQuestions();
         }
 
-        // Test management
+        // ==================== TEST MANAGEMENT ====================
+
         function saveTest() {
             const title = document.getElementById('testTitle').value.trim();
             const code = document.getElementById('testCode').value.trim();
@@ -715,7 +752,6 @@
             document.getElementById('testCode').value = 'ENG' + Date.now().toString().slice(-4);
             renderQuestions();
             loadTestsList();
-            generateShareLink(); // Regenerate share link
         }
 
         function loadTestsList() {
@@ -748,21 +784,34 @@
                 document.getElementById('testTitle').value = test.title;
                 document.getElementById('testCode').value = test.code;
                 renderQuestions();
-                showTab('teacher');
+                showTab('professor');
             }
         }
 
         function deleteTest(testId) {
-            if (confirm('Delete this test?')) {
+            if (confirm('Are you sure you want to delete this test?')) {
                 const tests = getTestsFromCloud();
-                delete tests[testId];
-                saveTestToCloud(tests[Object.keys(tests)[0]]); // Save remaining tests
-                loadTestsList();
-                generateShareLink();
+                if (tests[testId]) {
+                    delete tests[testId];
+                    // Save remaining tests to cloud
+                    if (Object.keys(tests).length > 0) {
+                        const firstTest = tests[Object.keys(tests)[0]];
+                        saveTestToCloud(firstTest);
+                    } else {
+                        // If no tests left, clear everything
+                        localStorage.removeItem(TESTS_KEY);
+                        const newUrl = window.location.origin + window.location.pathname;
+                        window.history.replaceState({}, '', newUrl);
+                        document.getElementById('shareSection').style.display = 'none';
+                    }
+                    loadTestsList();
+                    alert('Test deleted successfully!');
+                }
             }
         }
 
-        // Student test taking
+        // ==================== STUDENT TEST TAKING ====================
+
         function startStudentTest() {
             const studentName = document.getElementById('studentName').value.trim();
             const testCode = document.getElementById('studentTestCode').value.trim();
@@ -781,7 +830,7 @@
             const test = getTestByCodeFromCloud(testCode);
             
             if (!test) {
-                alert('Test not found! Check the access code. Make sure you opened the shared link from your teacher.');
+                alert('Test not found! Check the access code. Make sure you opened the shared link from your professor.');
                 return;
             }
 
@@ -800,41 +849,62 @@
                 answers: {}
             };
 
+            console.log('Starting test with monitoring...');
+            
             // Start monitoring
             startMonitoring();
             renderTestInterface();
         }
 
         function startMonitoring() {
+            // Clear any existing interval
+            if (screenshotInterval) {
+                clearInterval(screenshotInterval);
+            }
+
             // Tab switch detection
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) {
-                    monitoringData.tabSwitches++;
-                    takeScreenshot('tab_switch');
-                }
-            });
-
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            
             // Focus loss detection
-            window.addEventListener('blur', () => {
-                monitoringData.focusLoss++;
-                takeScreenshot('focus_loss');
-            });
-
+            window.addEventListener('blur', handleFocusLoss);
+            
             // Periodic screenshots
             screenshotInterval = setInterval(() => {
                 takeScreenshot('periodic');
             }, SCREENSHOT_INTERVAL);
+
+            // Add visual indicator that monitoring is active
+            const studentTab = document.querySelector('.tab[onclick="showTab(\'student\')"]');
+            studentTab.classList.add('monitoring-active');
+        }
+
+        function handleVisibilityChange() {
+            if (document.hidden) {
+                monitoringData.tabSwitches++;
+                takeScreenshot('tab_switch');
+                console.log(`Tab switched! Total switches: ${monitoringData.tabSwitches}`);
+            }
+        }
+
+        function handleFocusLoss() {
+            monitoringData.focusLoss++;
+            takeScreenshot('focus_loss');
+            console.log(`Focus lost! Total focus losses: ${monitoringData.focusLoss}`);
         }
 
         function takeScreenshot(reason) {
-            // Simulate screenshots with timestamps
+            // In a real implementation, use html2canvas for actual screenshots
+            // For now, we'll create detailed log entries
             const screenshot = {
                 timestamp: new Date().toISOString(),
                 reason: reason,
-                description: `Screenshot taken at ${new Date().toLocaleTimeString()} (${reason})`
+                tabSwitches: monitoringData.tabSwitches,
+                focusLoss: monitoringData.focusLoss,
+                description: `${reason} at ${new Date().toLocaleTimeString()} - Tab switches: ${monitoringData.tabSwitches}, Focus losses: ${monitoringData.focusLoss}`
             };
             
             monitoringData.screenshots.push(screenshot);
+            console.log(`Screenshot taken: ${reason}`, screenshot);
         }
 
         function renderTestInterface() {
@@ -850,9 +920,24 @@
                     <div class="student-info">
                         <p><strong>Student:</strong> ${monitoringData.studentName}</p>
                         <p><strong>Test Code:</strong> ${monitoringData.testCode}</p>
+                        <p><strong>Monitoring:</strong> <span style="color: red;">ACTIVE</span></p>
                     </div>
                     <div class="card warning">
-                        <strong>⚠️ Monitoring Active:</strong> Tab switching and activity are being monitored!
+                        <strong>⚠️ MONITORING ACTIVE:</strong> Tab switching, focus changes, and activity are being monitored and recorded!
+                    </div>
+                    <div class="monitoring-stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="tabSwitchCount">0</div>
+                            <div>Tab Switches</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="focusLossCount">0</div>
+                            <div>Focus Loss</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="screenshotCount">0</div>
+                            <div>Screenshots</div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -913,8 +998,20 @@
             container.innerHTML += `
                 <div class="card">
                     <button class="btn btn-success" onclick="finishTest()">✅ Submit Test</button>
+                    <p><small>Note: All monitoring data will be saved with your test results</small></p>
                 </div>
             `;
+
+            // Start updating monitoring display
+            updateMonitoringDisplay();
+        }
+
+        function updateMonitoringDisplay() {
+            setInterval(() => {
+                document.getElementById('tabSwitchCount').textContent = monitoringData.tabSwitches;
+                document.getElementById('focusLossCount').textContent = monitoringData.focusLoss;
+                document.getElementById('screenshotCount').textContent = monitoringData.screenshots.length;
+            }, 1000);
         }
 
         function updateStudentAnswer(questionId, element) {
@@ -943,9 +1040,19 @@
         }
 
         function finishTest() {
+            // Stop monitoring
             clearInterval(screenshotInterval);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('blur', handleFocusLoss);
+            
+            // Remove visual indicator
+            const studentTab = document.querySelector('.tab[onclick="showTab(\'student\')"]');
+            studentTab.classList.remove('monitoring-active');
+
             monitoringData.endTime = new Date().toISOString();
             monitoringData.answers = studentAnswers;
+
+            console.log('Test finished. Monitoring data:', monitoringData);
 
             // Calculate results
             let totalScore = 0;
@@ -984,7 +1091,7 @@
         }
 
         function calculateQuestionScore(question, studentAnswer) {
-            // Simplified scoring - in real implementation, implement proper scoring logic
+            // Simplified scoring - implement proper logic based on question type
             return question.points; 
         }
 
@@ -1032,6 +1139,27 @@
                 </div>
             `;
 
+            // Show screenshots if any
+            if (result.screenshots.length > 0) {
+                container.innerHTML += `
+                    <div class="card">
+                        <h3>📸 Activity Monitoring Log</h3>
+                        <div class="screenshot-gallery">
+                            ${result.screenshots.map((shot, index) => `
+                                <div class="screenshot-item">
+                                    <div style="background: #e0e0e0; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 5px; margin-bottom: 5px;">
+                                        📸 ${shot.reason}
+                                    </div>
+                                    <small>${new Date(shot.timestamp).toLocaleTimeString()}</small>
+                                    <br>
+                                    <small>Tabs: ${shot.tabSwitches}</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
             result.details.forEach((detail, index) => {
                 container.innerHTML += `
                     <div class="result-item ${detail.isCorrect ? 'correct' : 'incorrect'}">
@@ -1049,24 +1177,14 @@
             `;
         }
 
-        // Results management
+        // ==================== RESULTS MANAGEMENT ====================
+
         function getResults() {
             return JSON.parse(localStorage.getItem(RESULTS_KEY)) || [];
         }
 
         function saveResults(results) {
             localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
-        }
-
-        function accessResults() {
-            const password = document.getElementById('teacherPassword').value;
-            if (password === TEACHER_PASSWORD) {
-                document.querySelector('.password-protected').style.display = 'none';
-                document.getElementById('resultsContent').style.display = 'block';
-                loadResultsList();
-            } else {
-                alert('Incorrect password!');
-            }
         }
 
         function loadResultsList() {
@@ -1093,7 +1211,24 @@
                             <div class="stat-number">${result.focusLoss}</div>
                             <div>Focus Loss</div>
                         </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${result.screenshots.length}</div>
+                            <div>Screenshots</div>
+                        </div>
                     </div>
+
+                    ${result.screenshots.length > 0 ? `
+                        <div class="screenshot-gallery">
+                            ${result.screenshots.slice(0, 3).map(shot => `
+                                <div class="screenshot-item">
+                                    <div style="background: #e0e0e0; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 5px; font-size: 12px;">
+                                        ${shot.reason}
+                                    </div>
+                                    <small>${new Date(shot.timestamp).toLocaleTimeString()}</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
 
                     <button class="btn" onclick="viewDetailedResult(${index})">📋 View Details</button>
                     <button class="btn btn-danger" onclick="deleteResult(${index})">🗑️ Delete</button>
@@ -1105,7 +1240,17 @@
             const results = getResults();
             const result = results[index];
             
-            alert(`Detailed Results:\nStudent: ${result.studentName}\nTest: ${result.testTitle}\nScore: ${result.score}/${result.maxScore} (${result.percentage}%)\nTab Switches: ${result.tabSwitches}\nFocus Loss: ${result.focusLoss}`);
+            let details = `Detailed Results:\n\nStudent: ${result.studentName}\nTest: ${result.testTitle}\nScore: ${result.score}/${result.maxScore} (${result.percentage}%)\n\n`;
+            details += `Monitoring Data:\n- Tab Switches: ${result.tabSwitches}\n- Focus Loss: ${result.focusLoss}\n- Screenshots: ${result.screenshots.length}\n\n`;
+            
+            if (result.screenshots.length > 0) {
+                details += "Screenshot Log:\n";
+                result.screenshots.forEach((shot, i) => {
+                    details += `${i+1}. ${shot.reason} at ${new Date(shot.timestamp).toLocaleTimeString()}\n`;
+                });
+            }
+            
+            alert(details);
         }
 
         function deleteResult(index) {
@@ -1135,18 +1280,17 @@
             }
         }
 
-        // Initialize
+        // ==================== INITIALIZATION ====================
+
         document.addEventListener('DOMContentLoaded', function() {
-            loadTestsList();
-            addQuestion('multiple');
-            
-            // Show notification if tests are loaded from URL
+            // Check if we have tests in URL
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('tests')) {
-                setTimeout(() => {
-                    alert('📚 Tests loaded successfully! Students can now take tests using the access codes.');
-                }, 1000);
+                console.log('Tests loaded from URL');
             }
+            
+            // Default tab is Student
+            showTab('student');
         });
     </script>
 </body>
