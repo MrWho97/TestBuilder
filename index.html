@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TestBuilder - Система тестирования</title>
+    <title>English Test Builder</title>
     <style>
         * {
             margin: 0;
@@ -11,17 +11,18 @@
             box-sizing: border-box;
         }
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+            color: #333;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
         }
         .header {
@@ -43,14 +44,19 @@
             border: none;
             cursor: pointer;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 600;
+            transition: background 0.3s;
         }
         .tab.active {
             background: #3498db;
         }
+        .tab:hover {
+            background: #2980b9;
+        }
         .tab-content {
             display: none;
             padding: 30px;
+            min-height: 500px;
         }
         .tab-content.active {
             display: block;
@@ -61,9 +67,18 @@
             margin-bottom: 20px;
             border-radius: 10px;
             border-left: 5px solid #3498db;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .card.warning {
+            border-left-color: #e74c3c;
+            background: #ffeaa7;
+        }
+        .card.success {
+            border-left-color: #27ae60;
+            background: #d5f5e3;
         }
         .btn {
-            background: #3498db;
+            background: linear-gradient(135deg, #3498db, #2980b9);
             color: white;
             border: none;
             padding: 12px 25px;
@@ -71,143 +86,314 @@
             border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 600;
+            transition: all 0.3s;
         }
         .btn:hover {
-            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
         .btn-success {
-            background: #27ae60;
+            background: linear-gradient(135deg, #27ae60, #229954);
         }
         .btn-danger {
-            background: #e74c3c;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
         }
         input, textarea, select {
             width: 100%;
             padding: 12px;
-            margin: 8px 0;
             border: 2px solid #ddd;
             border-radius: 8px;
             font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
         }
         .question-card {
             background: white;
-            padding: 20px;
-            margin: 15px 0;
-            border-radius: 10px;
             border: 2px solid #e3f2fd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
         }
         .choice-item {
             display: flex;
             align-items: center;
-            margin: 10px 0;
+            margin-bottom: 10px;
             padding: 10px;
             background: #f8f9fa;
             border-radius: 6px;
         }
         .choice-item input[type="text"] {
             flex: 1;
-            margin-right: 15px;
+            margin-right: 10px;
         }
         .choice-item input[type="checkbox"] {
             width: 20px;
             height: 20px;
             margin-right: 10px;
         }
+        .matching-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        .matching-item input {
+            flex: 1;
+        }
+        .test-list {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .test-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #3498db;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .result-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .result-item.correct {
+            border-left-color: #27ae60;
+            background: #d5f5e3;
+        }
+        .result-item.incorrect {
+            border-left-color: #e74c3c;
+            background: #fadbd8;
+        }
+        .monitoring-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+        .password-protected {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #ffeaa7;
+        }
+        .screenshot-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .screenshot-item {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background: #f8f9fa;
+        }
+        .screenshot-item img {
+            width: 100%;
+            border-radius: 5px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            .header h1 {
+                font-size: 1.8em;
+            }
+            .content {
+                padding: 20px;
+            }
+            .btn {
+                width: 100%;
+                margin: 5px 0;
+            }
+            .tabs {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎯 TestBuilder - Система тестирования</h1>
-            <p>Создавайте тесты и отслеживайте результаты студентов</p>
+            <h1>🎯 English Test Builder</h1>
+            <p>Create and manage English language tests</p>
         </div>
         
         <div class="tabs">
-            <button class="tab active" onclick="showTab('teacher')">👨‍🏫 Преподаватель</button>
-            <button class="tab" onclick="showTab('student')">👨‍🎓 Студент</button>
-            <button class="tab" onclick="showTab('results')">📊 Результаты</button>
+            <button class="tab active" onclick="showTab('teacher')">👨‍🏫 Teacher</button>
+            <button class="tab" onclick="showTab('student')">👨‍🎓 Student</button>
+            <button class="tab" onclick="showTab('results')">📊 Results</button>
         </div>
 
         <div class="tab-content active" id="teacher">
             <div class="card">
-                <h2>📝 Создание нового теста</h2>
-                <input type="text" id="testTitle" placeholder="Название теста" value="Мой первый тест">
-                
-                <div id="questionsContainer">
-                    <p>Нажмите "➕ Добавить вопрос" чтобы начать создание теста</p>
+                <h2>📝 Create New Test</h2>
+                <div class="form-group">
+                    <label for="testTitle">Test Title:</label>
+                    <input type="text" id="testTitle" placeholder="Enter test title" value="English Grammar Test">
+                </div>
+                <div class="form-group">
+                    <label for="testCode">Test Access Code (students will need this):</label>
+                    <input type="text" id="testCode" placeholder="Enter access code" value="ENG2024">
                 </div>
                 
-                <button class="btn" onclick="addQuestion()">➕ Добавить вопрос</button>
-                <button class="btn btn-success" onclick="saveTest()">💾 Сохранить тест</button>
+                <div id="questionsContainer">
+                    <!-- Questions will be added here -->
+                </div>
+                
+                <button class="btn" onclick="addQuestion('multiple')">➕ Multiple Choice</button>
+                <button class="btn" onclick="addQuestion('short')">📝 Short Answer</button>
+                <button class="btn" onclick="addQuestion('matching')">🔗 Matching</button>
+                <button class="btn" onclick="addQuestion('fillblank')">📝 Fill in Blanks</button>
+                <button class="btn btn-success" onclick="saveTest()">💾 Save Test</button>
             </div>
 
             <div class="card">
-                <h2>📋 Мои тесты</h2>
+                <h2>📋 My Tests</h2>
                 <div id="testsList">
-                    <p>Здесь появятся сохраненные тесты</p>
+                    <!-- Tests list will appear here -->
                 </div>
             </div>
         </div>
 
         <div class="tab-content" id="student">
             <div class="card">
-                <h2>🎓 Прохождение теста</h2>
-                <input type="text" id="studentName" placeholder="Ваше ФИО" required>
-                <input type="text" id="studentGroup" placeholder="Ваша группа">
-                <select id="testSelect">
-                    <option value="">-- Выберите тест --</option>
-                </select>
-                <button class="btn btn-success" onclick="startTest()">🚀 Начать тест</button>
+                <h2>🎓 Take a Test</h2>
+                <div class="form-group">
+                    <label for="studentName">Your Full Name:</label>
+                    <input type="text" id="studentName" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="studentTestCode">Test Access Code:</label>
+                    <input type="text" id="studentTestCode" placeholder="Enter test code provided by teacher" required>
+                </div>
+                <button class="btn btn-success" onclick="startStudentTest()">🚀 Start Test</button>
             </div>
 
             <div id="testInterface" style="display: none;">
-                <!-- Здесь будет интерфейс тестирования -->
+                <!-- Test interface will appear here -->
             </div>
         </div>
 
         <div class="tab-content" id="results">
-            <div class="card">
-                <h2>📊 Результаты студентов</h2>
-                <div id="resultsList">
-                    <p>Здесь появятся результаты тестирования</p>
+            <div class="password-protected">
+                <h3>🔒 Teacher Access Required</h3>
+                <div class="form-group">
+                    <label for="teacherPassword">Enter Teacher Password:</label>
+                    <input type="password" id="teacherPassword" placeholder="Enter password to view results">
                 </div>
-                <button class="btn" onclick="exportResults()">📥 Экспорт результатов</button>
-                <button class="btn btn-danger" onclick="clearResults()">🗑️ Очистить все результаты</button>
+                <button class="btn" onclick="accessResults()">🔓 Access Results</button>
+            </div>
+            
+            <div id="resultsContent" style="display: none;">
+                <div class="card">
+                    <h2>📊 Student Results</h2>
+                    <div id="resultsList">
+                        <!-- Results will appear here -->
+                    </div>
+                    <button class="btn" onclick="exportResults()">📥 Export Results</button>
+                    <button class="btn btn-danger" onclick="clearResults()">🗑️ Clear All Results</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // БАЗОВЫЙ ФУНКЦИОНАЛ - ДЛЯ НАЧАЛА РАБОТЫ
-        let currentQuestions = [];
+        // Configuration
+        const TEACHER_PASSWORD = "teacher123"; // Change this password
+        const TESTS_KEY = 'english_tests';
+        const RESULTS_KEY = 'english_results';
+        const SCREENSHOT_INTERVAL = 30000; // 30 seconds
 
+        // Initialize
+        let currentQuestions = [];
+        let currentTest = null;
+        let studentAnswers = {};
+        let monitoringData = {};
+        let screenshotInterval;
+
+        // Tab navigation
         function showTab(tabName) {
-            // Скрыть все табы
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             
-            // Показать выбранный таб
             document.getElementById(tabName).classList.add('active');
             document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
+
+            if (tabName === 'teacher') {
+                loadTestsList();
+            }
         }
 
-        function addQuestion() {
+        // Question management
+        function addQuestion(type = 'multiple') {
             const questionId = Date.now();
-            const question = {
+            let question = {
                 id: questionId,
-                type: 'multiple',
-                text: 'Введите текст вопроса здесь',
+                type: type,
+                text: 'Enter question text here',
                 points: 1,
-                choices: [
-                    { id: questionId + 1, text: 'Вариант ответа 1', correct: false },
-                    { id: questionId + 2, text: 'Вариант ответа 2', correct: false }
-                ]
+                penalty: 20, // Spelling penalty percentage
+                choices: [],
+                pairs: [],
+                blanks: []
             };
+
+            switch(type) {
+                case 'multiple':
+                    question.choices = [
+                        { id: questionId + 1, text: 'Option 1', correct: false },
+                        { id: questionId + 2, text: 'Option 2', correct: false }
+                    ];
+                    break;
+                case 'matching':
+                    question.pairs = [
+                        { id: questionId + 1, left: 'Word 1', right: 'Definition 1' },
+                        { id: questionId + 2, left: 'Word 2', right: 'Definition 2' }
+                    ];
+                    break;
+                case 'fillblank':
+                    question.text = 'Complete the sentence: The cat sat on the ______.';
+                    question.blanks = [
+                        { id: questionId + 1, answer: 'mat', position: 6 }
+                    ];
+                    break;
+            }
 
             currentQuestions.push(question);
             renderQuestions();
@@ -215,145 +401,669 @@
 
         function renderQuestions() {
             const container = document.getElementById('questionsContainer');
-            container.innerHTML = '<h3>📝 Вопросы теста:</h3>';
-
-            if (currentQuestions.length === 0) {
-                container.innerHTML += '<p>Пока нет вопросов. Добавьте первый вопрос!</p>';
-                return;
-            }
+            container.innerHTML = '<h3>Questions:</h3>';
 
             currentQuestions.forEach((question, index) => {
-                const questionHTML = `
+                let questionHTML = `
                     <div class="question-card">
-                        <h4>Вопрос ${index + 1}</h4>
-                        <input type="text" value="${question.text}" 
-                               onchange="updateQuestionText(${question.id}, this.value)"
-                               placeholder="Текст вопроса">
-                        
-                        <div style="margin: 15px 0;">
-                            <strong>Варианты ответов:</strong>
-                            ${question.choices.map((choice, choiceIndex) => `
-                                <div class="choice-item">
-                                    <input type="text" value="${choice.text}" 
-                                           onchange="updateChoiceText(${question.id}, ${choice.id}, this.value)"
-                                           placeholder="Текст варианта ответа">
-                                    <input type="checkbox" ${choice.correct ? 'checked' : ''}
-                                           onchange="toggleChoiceCorrect(${question.id}, ${choice.id})">
-                                    <span>Правильный</span>
-                                    <button class="btn btn-danger" onclick="removeChoice(${question.id}, ${choice.id})">🗑️</button>
-                                </div>
-                            `).join('')}
-                            <button class="btn" onclick="addChoice(${question.id})">➕ Добавить вариант</button>
+                        <h4>Question ${index + 1} (${question.type})</h4>
+                        <div class="form-group">
+                            <label>Question Text:</label>
+                            <textarea onchange="updateQuestionText(${question.id}, this.value)">${question.text}</textarea>
                         </div>
+                        
+                        <div class="form-group" style="display: flex; gap: 15px;">
+                            <div style="flex: 1;">
+                                <label>Points:</label>
+                                <input type="number" value="${question.points}" min="1" 
+                                       onchange="updateQuestionPoints(${question.id}, this.value)">
+                            </div>
+                            <div style="flex: 1;">
+                                <label>Spelling Penalty (%):</label>
+                                <input type="number" value="${question.penalty}" min="0" max="100"
+                                       onchange="updateQuestionPenalty(${question.id}, this.value)">
+                            </div>
+                        </div>`;
 
-                        <button class="btn btn-danger" onclick="removeQuestion(${question.id})">🗑️ Удалить вопрос</button>
+                switch(question.type) {
+                    case 'multiple':
+                        questionHTML += `
+                            <div class="form-group">
+                                <label>Options (check correct ones):</label>
+                                ${question.choices.map((choice, ci) => `
+                                    <div class="choice-item">
+                                        <input type="text" value="${choice.text}" 
+                                               onchange="updateChoiceText(${question.id}, ${choice.id}, this.value)">
+                                        <input type="checkbox" ${choice.correct ? 'checked' : ''}
+                                               onchange="toggleChoiceCorrect(${question.id}, ${choice.id})">
+                                        <span>Correct</span>
+                                        <button class="btn btn-danger" onclick="removeChoice(${question.id}, ${choice.id})">🗑️</button>
+                                    </div>
+                                `).join('')}
+                                <button class="btn" onclick="addChoice(${question.id})">➕ Add Option</button>
+                            </div>`;
+                        break;
+                    
+                    case 'matching':
+                        questionHTML += `
+                            <div class="form-group">
+                                <label>Matching Pairs:</label>
+                                ${question.pairs.map((pair, pi) => `
+                                    <div class="matching-item">
+                                        <input type="text" value="${pair.left}" placeholder="Left item"
+                                               onchange="updatePairLeft(${question.id}, ${pair.id}, this.value)">
+                                        <span>→</span>
+                                        <input type="text" value="${pair.right}" placeholder="Right item"
+                                               onchange="updatePairRight(${question.id}, ${pair.id}, this.value)">
+                                        <button class="btn btn-danger" onclick="removePair(${question.id}, ${pair.id})">🗑️</button>
+                                    </div>
+                                `).join('')}
+                                <button class="btn" onclick="addPair(${question.id})">➕ Add Pair</button>
+                            </div>`;
+                        break;
+                    
+                    case 'fillblank':
+                        questionHTML += `
+                            <div class="form-group">
+                                <label>Correct Answers (use _____ for blanks):</label>
+                                <input type="text" value="${question.text}" 
+                                       onchange="updateQuestionText(${question.id}, this.value)"
+                                       placeholder="E.g.: The cat sat on the ______">
+                                <small>Use underscores (______) to indicate blanks in the text</small>
+                            </div>`;
+                        break;
+                    
+                    case 'short':
+                        questionHTML += `
+                            <div class="form-group">
+                                <label>Correct Answer (multiple variants separated by |):</label>
+                                <input type="text" value="${question.answer || ''}" 
+                                       onchange="updateQuestionAnswer(${question.id}, this.value)"
+                                       placeholder="E.g.: apple|red apple|an apple">
+                                <small>Separate multiple correct answers with | symbol</small>
+                            </div>`;
+                        break;
+                }
+
+                questionHTML += `
+                    <div style="margin-top: 15px;">
+                        <button class="btn btn-danger" onclick="removeQuestion(${question.id})">🗑️ Delete Question</button>
                     </div>
-                `;
+                </div>`;
+
                 container.innerHTML += questionHTML;
             });
         }
 
-        // Функции для работы с вопросами
-        function updateQuestionText(questionId, text) {
-            const question = currentQuestions.find(q => q.id === questionId);
-            if (question) question.text = text;
+        // Question editing functions
+        function updateQuestionText(id, text) {
+            const q = currentQuestions.find(q => q.id === id);
+            if (q) q.text = text;
         }
 
-        function updateChoiceText(questionId, choiceId, text) {
-            const question = currentQuestions.find(q => q.id === questionId);
-            if (question) {
-                const choice = question.choices.find(c => c.id === choiceId);
+        function updateQuestionPoints(id, points) {
+            const q = currentQuestions.find(q => q.id === id);
+            if (q) q.points = parseInt(points);
+        }
+
+        function updateQuestionPenalty(id, penalty) {
+            const q = currentQuestions.find(q => q.id === id);
+            if (q) q.penalty = parseInt(penalty);
+        }
+
+        function updateQuestionAnswer(id, answer) {
+            const q = currentQuestions.find(q => q.id === id);
+            if (q) q.answer = answer;
+        }
+
+        function updateChoiceText(qId, cId, text) {
+            const q = currentQuestions.find(q => q.id === qId);
+            if (q) {
+                const choice = q.choices.find(c => c.id === cId);
                 if (choice) choice.text = text;
             }
         }
 
-        function toggleChoiceCorrect(questionId, choiceId) {
-            const question = currentQuestions.find(q => q.id === questionId);
-            if (question) {
-                const choice = question.choices.find(c => c.id === choiceId);
+        function toggleChoiceCorrect(qId, cId) {
+            const q = currentQuestions.find(q => q.id === qId);
+            if (q) {
+                const choice = q.choices.find(c => c.id === cId);
                 if (choice) choice.correct = !choice.correct;
             }
         }
 
-        function addChoice(questionId) {
-            const question = currentQuestions.find(q => q.id === questionId);
-            if (question) {
-                question.choices.push({
-                    id: Date.now(),
-                    text: 'Новый вариант ответа',
-                    correct: false
-                });
+        function addChoice(qId) {
+            const q = currentQuestions.find(q => q.id === qId);
+            if (q) {
+                q.choices.push({ id: Date.now(), text: 'New option', correct: false });
                 renderQuestions();
             }
         }
 
-        function removeChoice(questionId, choiceId) {
-            const question = currentQuestions.find(q => q.id === questionId);
-            if (question) {
-                question.choices = question.choices.filter(c => c.id !== choiceId);
+        function removeChoice(qId, cId) {
+            const q = currentQuestions.find(q => q.id === qId);
+            if (q) {
+                q.choices = q.choices.filter(c => c.id !== cId);
                 renderQuestions();
             }
         }
 
-        function removeQuestion(questionId) {
-            currentQuestions = currentQuestions.filter(q => q.id !== questionId);
+        function updatePairLeft(qId, pId, text) {
+            const q = currentQuestions.find(q => q.id === qId);
+            if (q) {
+                const pair = q.pairs.find(p => p.id === pId);
+                if (pair) pair.left = text;
+            }
+        }
+
+        function updatePairRight(qId, pId, text) {
+            const q = currentQuestions.find(q => q.id === qId);
+            if (q) {
+                const pair = q.pairs.find(p => p.id === pId);
+                if (pair) pair.right = text;
+            }
+        }
+
+        function addPair(qId) {
+            const q = currentQuestions.find(q => q.id === qId);
+            if (q) {
+                q.pairs.push({ id: Date.now(), left: 'New item', right: 'New match' });
+                renderQuestions();
+            }
+        }
+
+        function removePair(qId, pId) {
+            const q = currentQuestions.find(q => q.id === qId);
+            if (q) {
+                q.pairs = q.pairs.filter(p => p.id !== pId);
+                renderQuestions();
+            }
+        }
+
+        function removeQuestion(id) {
+            currentQuestions = currentQuestions.filter(q => q.id !== id);
             renderQuestions();
         }
 
+        // Test management
         function saveTest() {
             const title = document.getElementById('testTitle').value.trim();
-            if (!title) {
-                alert('Введите название теста!');
-                return;
-            }
-            if (currentQuestions.length === 0) {
-                alert('Добавьте хотя бы один вопрос!');
+            const code = document.getElementById('testCode').value.trim();
+            
+            if (!title || !code) {
+                alert('Please enter both test title and access code!');
                 return;
             }
 
-            // Сохраняем в localStorage
-            const tests = JSON.parse(localStorage.getItem('testbuilder_tests') || '{}');
+            if (currentQuestions.length === 0) {
+                alert('Please add at least one question!');
+                return;
+            }
+
+            const tests = getTests();
             const testId = 'test_' + Date.now();
+            
             tests[testId] = {
                 id: testId,
                 title: title,
-                questions: currentQuestions,
+                code: code,
+                questions: JSON.parse(JSON.stringify(currentQuestions)),
                 createdAt: new Date().toISOString()
             };
-            localStorage.setItem('testbuilder_tests', JSON.stringify(tests));
 
-            alert('✅ Тест успешно сохранен!');
+            saveTests(tests);
+            alert('✅ Test saved successfully! Access code: ' + code);
             currentQuestions = [];
-            document.getElementById('testTitle').value = 'Мой тест';
+            document.getElementById('testTitle').value = 'English Grammar Test';
+            document.getElementById('testCode').value = 'ENG' + Date.now().toString().slice(-4);
             renderQuestions();
             loadTestsList();
         }
 
+        function getTests() {
+            return JSON.parse(localStorage.getItem(TESTS_KEY)) || {};
+        }
+
+        function saveTests(tests) {
+            localStorage.setItem(TESTS_KEY, JSON.stringify(tests));
+        }
+
         function loadTestsList() {
-            const tests = JSON.parse(localStorage.getItem('testbuilder_tests') || '{}');
+            const tests = getTests();
             const container = document.getElementById('testsList');
             
             if (Object.keys(tests).length === 0) {
-                container.innerHTML = '<p>📭 Тестов пока нет</p>';
+                container.innerHTML = '<p>No tests created yet</p>';
                 return;
             }
 
             container.innerHTML = Object.values(tests).map(test => `
-                <div class="card">
+                <div class="test-item">
                     <h3>${test.title}</h3>
-                    <p>❓ Вопросов: ${test.questions.length}</p>
-                    <p>📅 Создан: ${new Date(test.createdAt).toLocaleDateString()}</p>
-                    <button class="btn" onclick="loadTest('${test.id}')">✏️ Редактировать</button>
-                    <button class="btn btn-danger" onclick="deleteTest('${test.id}')">🗑️ Удалить</button>
+                    <p><strong>Access Code:</strong> ${test.code}</p>
+                    <p><strong>Questions:</strong> ${test.questions.length}</p>
+                    <p><strong>Created:</strong> ${new Date(test.createdAt).toLocaleDateString()}</p>
+                    <button class="btn" onclick="loadTest('${test.id}')">✏️ Edit</button>
+                    <button class="btn btn-danger" onclick="deleteTest('${test.id}')">🗑️ Delete</button>
                 </div>
             `).join('');
         }
 
-        // Инициализация при загрузке
+        function loadTest(testId) {
+            const tests = getTests();
+            const test = tests[testId];
+            
+            if (test) {
+                currentQuestions = JSON.parse(JSON.stringify(test.questions));
+                document.getElementById('testTitle').value = test.title;
+                document.getElementById('testCode').value = test.code;
+                renderQuestions();
+                showTab('teacher');
+            }
+        }
+
+        function deleteTest(testId) {
+            if (confirm('Delete this test?')) {
+                const tests = getTests();
+                delete tests[testId];
+                saveTests(tests);
+                loadTestsList();
+            }
+        }
+
+        // Student test taking
+        function startStudentTest() {
+            const studentName = document.getElementById('studentName').value.trim();
+            const testCode = document.getElementById('studentTestCode').value.trim();
+
+            if (!studentName) {
+                alert('Please enter your name!');
+                return;
+            }
+
+            if (!testCode) {
+                alert('Please enter test access code!');
+                return;
+            }
+
+            // Find test by code
+            const tests = getTests();
+            const test = Object.values(tests).find(t => t.code === testCode);
+            
+            if (!test) {
+                alert('Test not found! Check the access code.');
+                return;
+            }
+
+            currentTest = test;
+            studentAnswers = {};
+            
+            // Initialize monitoring
+            monitoringData = {
+                studentName: studentName,
+                testCode: testCode,
+                testTitle: test.title,
+                startTime: new Date().toISOString(),
+                tabSwitches: 0,
+                focusLoss: 0,
+                screenshots: [],
+                answers: {}
+            };
+
+            // Start monitoring
+            startMonitoring();
+            renderTestInterface();
+        }
+
+        function startMonitoring() {
+            // Tab switch detection
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    monitoringData.tabSwitches++;
+                    takeScreenshot('tab_switch');
+                }
+            });
+
+            // Focus loss detection
+            window.addEventListener('blur', () => {
+                monitoringData.focusLoss++;
+                takeScreenshot('focus_loss');
+            });
+
+            // Periodic screenshots
+            screenshotInterval = setInterval(() => {
+                takeScreenshot('periodic');
+            }, SCREENSHOT_INTERVAL);
+        }
+
+        function takeScreenshot(reason) {
+            // In a real implementation, you would use html2canvas library
+            // For now, we'll simulate screenshots with timestamps
+            const screenshot = {
+                timestamp: new Date().toISOString(),
+                reason: reason,
+                // In real implementation: image: canvas.toDataURL()
+                description: `Screenshot taken at ${new Date().toLocaleTimeString()} (${reason})`
+            };
+            
+            monitoringData.screenshots.push(screenshot);
+        }
+
+        function renderTestInterface() {
+            const container = document.getElementById('testInterface');
+            const studentForm = document.querySelector('#student .card');
+            
+            studentForm.style.display = 'none';
+            container.style.display = 'block';
+
+            container.innerHTML = `
+                <div class="card warning">
+                    <h2>${currentTest.title}</h2>
+                    <div class="student-info">
+                        <p><strong>Student:</strong> ${monitoringData.studentName}</p>
+                        <p><strong>Test Code:</strong> ${monitoringData.testCode}</p>
+                    </div>
+                    <div class="card warning">
+                        <strong>⚠️ Monitoring Active:</strong> Tab switching and activity are being monitored!
+                    </div>
+                </div>
+            `;
+
+            currentTest.questions.forEach((question, index) => {
+                let questionHTML = '';
+                
+                switch(question.type) {
+                    case 'multiple':
+                        questionHTML = question.choices.map(choice => `
+                            <label style="display: block; margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                                <input type="checkbox" name="question_${question.id}" value="${choice.id}"
+                                       onchange="updateStudentAnswer(${question.id}, this)">
+                                ${choice.text}
+                            </label>
+                        `).join('');
+                        break;
+                    
+                    case 'short':
+                        questionHTML = `
+                            <textarea style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;"
+                                      onchange="updateStudentAnswer(${question.id}, this)"
+                                      placeholder="Type your answer here..."></textarea>
+                        `;
+                        break;
+                    
+                    case 'matching':
+                        questionHTML = `
+                            <div style="margin: 10px 0;">
+                                ${question.pairs.map((pair, pi) => `
+                                    <div class="matching-item">
+                                        <span style="min-width: 100px;">${pair.left}</span>
+                                        <span>→</span>
+                                        <input type="text" style="flex: 1;"
+                                               onchange="updateMatchingAnswer(${question.id}, ${pi}, this.value)"
+                                               placeholder="Match here">
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                        break;
+                    
+                    case 'fillblank':
+                        const blankText = question.text.replace(/_{3,}/g, '<input type="text" style="width: 150px; padding: 5px; border: 1px solid #ccc; border-radius: 3px;" onchange="updateBlankAnswer(${question.id}, this)">');
+                        questionHTML = `<div style="margin: 10px 0; font-size: 16px; line-height: 1.6;">${blankText}</div>`;
+                        break;
+                }
+
+                container.innerHTML += `
+                    <div class="card">
+                        <h3>Question ${index + 1} (${question.points} points)</h3>
+                        <p>${question.type !== 'fillblank' ? question.text : ''}</p>
+                        ${questionHTML}
+                    </div>
+                `;
+            });
+
+            container.innerHTML += `
+                <div class="card">
+                    <button class="btn btn-success" onclick="finishTest()">✅ Submit Test</button>
+                </div>
+            `;
+        }
+
+        function updateStudentAnswer(questionId, element) {
+            if (element.type === 'checkbox') {
+                if (!studentAnswers[questionId]) studentAnswers[questionId] = [];
+                if (element.checked) {
+                    if (!studentAnswers[questionId].includes(element.value)) {
+                        studentAnswers[questionId].push(element.value);
+                    }
+                } else {
+                    studentAnswers[questionId] = studentAnswers[questionId].filter(id => id !== element.value);
+                }
+            } else {
+                studentAnswers[questionId] = element.value;
+            }
+        }
+
+        function updateMatchingAnswer(questionId, pairIndex, value) {
+            if (!studentAnswers[questionId]) studentAnswers[questionId] = [];
+            studentAnswers[questionId][pairIndex] = value;
+        }
+
+        function updateBlankAnswer(questionId, element) {
+            if (!studentAnswers[questionId]) studentAnswers[questionId] = [];
+            // Store blank answers
+            studentAnswers[questionId].push(element.value);
+        }
+
+        function finishTest() {
+            clearInterval(screenshotInterval);
+            monitoringData.endTime = new Date().toISOString();
+            monitoringData.answers = studentAnswers;
+
+            // Calculate results
+            let totalScore = 0;
+            let maxScore = 0;
+            const details = [];
+
+            currentTest.questions.forEach(question => {
+                maxScore += question.points;
+                let score = calculateQuestionScore(question, studentAnswers[question.id] || []);
+                totalScore += score;
+
+                details.push({
+                    question: question.text,
+                    studentAnswer: formatStudentAnswer(question, studentAnswers[question.id]),
+                    correctAnswer: getCorrectAnswer(question),
+                    score: score,
+                    maxScore: question.points,
+                    isCorrect: score === question.points
+                });
+            });
+
+            // Save result
+            const result = {
+                ...monitoringData,
+                score: totalScore,
+                maxScore: maxScore,
+                percentage: Math.round((totalScore / maxScore) * 100),
+                details: details
+            };
+
+            const results = getResults();
+            results.push(result);
+            saveResults(results);
+
+            showTestResults(result);
+        }
+
+        function calculateQuestionScore(question, studentAnswer) {
+            // Implementation depends on question type
+            // This is a simplified version
+            return question.points; // Placeholder
+        }
+
+        function formatStudentAnswer(question, answer) {
+            return Array.isArray(answer) ? answer.join(', ') : (answer || 'No answer');
+        }
+
+        function getCorrectAnswer(question) {
+            switch(question.type) {
+                case 'multiple':
+                    return question.choices.filter(c => c.correct).map(c => c.text).join(', ');
+                case 'short':
+                    return question.answer;
+                case 'matching':
+                    return question.pairs.map(p => `${p.left} → ${p.right}`).join('; ');
+                case 'fillblank':
+                    return question.text;
+                default:
+                    return 'Correct answer';
+            }
+        }
+
+        function showTestResults(result) {
+            const container = document.getElementById('testInterface');
+            container.innerHTML = `
+                <div class="card success">
+                    <h2>📊 Test Results</h2>
+                    <p><strong>Student:</strong> ${result.studentName}</p>
+                    <p><strong>Test:</strong> ${result.testTitle}</p>
+                    <p><strong>Score:</strong> ${result.score} / ${result.maxScore} (${result.percentage}%)</p>
+                    <div class="monitoring-stats">
+                        <div class="stat-card">
+                            <div class="stat-number">${result.tabSwitches}</div>
+                            <div>Tab Switches</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${result.focusLoss}</div>
+                            <div>Focus Loss</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${result.screenshots.length}</div>
+                            <div>Screenshots</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            result.details.forEach((detail, index) => {
+                container.innerHTML += `
+                    <div class="result-item ${detail.isCorrect ? 'correct' : 'incorrect'}">
+                        <h4>Question ${index + 1}</h4>
+                        <p><strong>Question:</strong> ${detail.question}</p>
+                        <p><strong>Your Answer:</strong> ${detail.studentAnswer}</p>
+                        <p><strong>Correct Answer:</strong> ${detail.correctAnswer}</p>
+                        <p><strong>Score:</strong> ${detail.score} / ${detail.maxScore}</p>
+                    </div>
+                `;
+            });
+
+            container.innerHTML += `
+                <button class="btn" onclick="location.reload()">🔄 Take Another Test</button>
+            `;
+        }
+
+        // Results management
+        function getResults() {
+            return JSON.parse(localStorage.getItem(RESULTS_KEY)) || [];
+        }
+
+        function saveResults(results) {
+            localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
+        }
+
+        function accessResults() {
+            const password = document.getElementById('teacherPassword').value;
+            if (password === TEACHER_PASSWORD) {
+                document.querySelector('.password-protected').style.display = 'none';
+                document.getElementById('resultsContent').style.display = 'block';
+                loadResultsList();
+            } else {
+                alert('Incorrect password!');
+            }
+        }
+
+        function loadResultsList() {
+            const results = getResults();
+            const container = document.getElementById('resultsList');
+
+            if (results.length === 0) {
+                container.innerHTML = '<p>No results yet</p>';
+                return;
+            }
+
+            container.innerHTML = results.map((result, index) => `
+                <div class="card">
+                    <h3>${result.studentName} - ${result.testTitle}</h3>
+                    <p><strong>Score:</strong> ${result.score}/${result.maxScore} (${result.percentage}%)</p>
+                    <p><strong>Date:</strong> ${new Date(result.startTime).toLocaleString()}</p>
+                    
+                    <div class="monitoring-stats">
+                        <div class="stat-card">
+                            <div class="stat-number">${result.tabSwitches}</div>
+                            <div>Tab Switches</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${result.focusLoss}</div>
+                            <div>Focus Loss</div>
+                        </div>
+                    </div>
+
+                    <div class="screenshot-gallery">
+                        ${result.screenshots.slice(-3).map(shot => `
+                            <div class="screenshot-item">
+                                <div style="background: #e0e0e0; height: 100px; display: flex; align-items: center; justify-content: center; border-radius: 5px;">
+                                    📸 ${shot.reason}
+                                </div>
+                                <small>${new Date(shot.timestamp).toLocaleTimeString()}</small>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <button class="btn" onclick="viewDetailedResult(${index})">📋 View Details</button>
+                    <button class="btn btn-danger" onclick="deleteResult(${index})">🗑️ Delete</button>
+                </div>
+            `).join('');
+        }
+
+        function viewDetailedResult(index) {
+            const results = getResults();
+            const result = results[index];
+            
+            alert(`Detailed Results:\nStudent: ${result.studentName}\nTest: ${result.testTitle}\nScore: ${result.score}/${result.maxScore} (${result.percentage}%)\nTab Switches: ${result.tabSwitches}\nFocus Loss: ${result.focusLoss}`);
+        }
+
+        function deleteResult(index) {
+            if (confirm('Delete this result?')) {
+                const results = getResults();
+                results.splice(index, 1);
+                saveResults(results);
+                loadResultsList();
+            }
+        }
+
+        function exportResults() {
+            const results = getResults();
+            const dataStr = JSON.stringify(results, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = 'english_test_results.json';
+            link.click();
+        }
+
+        function clearResults() {
+            if (confirm('Clear all results?')) {
+                saveResults([]);
+                loadResultsList();
+            }
+        }
+
+        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadTestsList();
-            // Добавляем первый вопрос автоматически
-            addQuestion();
+            addQuestion('multiple'); // Start with a multiple choice question
         });
     </script>
 </body>
