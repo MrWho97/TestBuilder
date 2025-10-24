@@ -210,21 +210,11 @@
             margin: 20px 0;
             border: 2px solid #ffeaa7;
         }
-        .screenshot-gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin: 15px 0;
-        }
-        .screenshot-item {
-            border: 2px solid #ddd;
+        .share-section {
+            background: #e8f5e8;
+            padding: 15px;
             border-radius: 8px;
-            padding: 10px;
-            background: #f8f9fa;
-        }
-        .screenshot-item img {
-            width: 100%;
-            border-radius: 5px;
+            margin: 15px 0;
         }
         @media (max-width: 768px) {
             .container {
@@ -336,8 +326,8 @@
     <script>
         // Configuration
         const TEACHER_PASSWORD = "teacher123"; // Change this password
-        const TESTS_KEY = 'english_tests';
-        const RESULTS_KEY = 'english_results';
+        const TESTS_KEY = 'english_tests_cloud';
+        const RESULTS_KEY = 'english_results_cloud';
         const SCREENSHOT_INTERVAL = 30000; // 30 seconds
 
         // Initialize
@@ -346,6 +336,111 @@
         let studentAnswers = {};
         let monitoringData = {};
         let screenshotInterval;
+
+        // ==================== CLOUD STORAGE SOLUTION ====================
+        
+        // Use URL parameters to share tests between devices
+        function saveTestToCloud(test) {
+            // Get existing tests from URL or localStorage
+            const urlParams = new URLSearchParams(window.location.search);
+            let cloudTests = {};
+            
+            // Try to get from URL first
+            const urlTests = urlParams.get('tests');
+            if (urlTests) {
+                try {
+                    cloudTests = JSON.parse(atob(urlTests));
+                } catch (e) {
+                    console.log('No tests in URL');
+                }
+            }
+            
+            // If no URL, try localStorage as backup
+            if (Object.keys(cloudTests).length === 0) {
+                cloudTests = JSON.parse(localStorage.getItem(TESTS_KEY)) || {};
+            }
+            
+            // Add new test
+            cloudTests[test.id] = test;
+            
+            // Save to both URL and localStorage
+            const testsString = btoa(JSON.stringify(cloudTests));
+            
+            // Update URL without reloading page
+            const newUrl = window.location.origin + window.location.pathname + '?tests=' + encodeURIComponent(testsString);
+            window.history.replaceState({}, '', newUrl);
+            
+            // Also save to localStorage as backup
+            localStorage.setItem(TESTS_KEY, JSON.stringify(cloudTests));
+            
+            return cloudTests;
+        }
+
+        function getTestsFromCloud() {
+            // Try to get from URL first
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlTests = urlParams.get('tests');
+            
+            if (urlTests) {
+                try {
+                    const tests = JSON.parse(atob(urlTests));
+                    // Also update localStorage with URL data
+                    localStorage.setItem(TESTS_KEY, JSON.stringify(tests));
+                    return tests;
+                } catch (e) {
+                    console.log('Error parsing URL tests');
+                }
+            }
+            
+            // Fallback to localStorage
+            return JSON.parse(localStorage.getItem(TESTS_KEY)) || {};
+        }
+
+        function getTestByCodeFromCloud(code) {
+            const tests = getTestsFromCloud();
+            return Object.values(tests).find(test => test.code === code);
+        }
+
+        function generateShareLink() {
+            const tests = getTestsFromCloud();
+            if (Object.keys(tests).length === 0) {
+                alert('No tests to share! Create a test first.');
+                return;
+            }
+            
+            const testsString = btoa(JSON.stringify(tests));
+            const shareUrl = window.location.origin + window.location.pathname + '?tests=' + encodeURIComponent(testsString);
+            
+            // Show share link to user
+            const shareSection = document.createElement('div');
+            shareSection.className = 'share-section';
+            shareSection.innerHTML = `
+                <h4>🔗 Share Tests with Students:</h4>
+                <p>Send this link to students so they can access all tests:</p>
+                <input type="text" value="${shareUrl}" readonly style="width: 100%; padding: 10px; margin: 10px 0;">
+                <button class="btn" onclick="copyToClipboard('${shareUrl}')">📋 Copy Link</button>
+                <small>Students need to open this exact link to see the tests</small>
+            `;
+            
+            document.getElementById('teacher').prepend(shareSection);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Link copied to clipboard!');
+            }).catch(() => {
+                // Fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('Link copied!');
+            });
+        }
+
+        // ==================== REST OF THE CODE ====================
 
         // Tab navigation
         function showTab(tabName) {
@@ -357,10 +452,12 @@
 
             if (tabName === 'teacher') {
                 loadTestsList();
+                // Auto-generate share link when teacher tab opens
+                setTimeout(generateShareLink, 1000);
             }
         }
 
-        // Question management
+        // Question management (same as before)
         function addQuestion(type = 'multiple') {
             const questionId = Date.now();
             let question = {
@@ -368,7 +465,7 @@
                 type: type,
                 text: 'Enter question text here',
                 points: 1,
-                penalty: 20, // Spelling penalty percentage
+                penalty: 20,
                 choices: [],
                 pairs: [],
                 blanks: []
@@ -495,7 +592,7 @@
             });
         }
 
-        // Question editing functions
+        // Question editing functions (same as before)
         function updateQuestionText(id, text) {
             const q = currentQuestions.find(q => q.id === id);
             if (q) q.text = text;
@@ -600,10 +697,8 @@
                 return;
             }
 
-            const tests = getTests();
             const testId = 'test_' + Date.now();
-            
-            tests[testId] = {
+            const test = {
                 id: testId,
                 title: title,
                 code: code,
@@ -611,25 +706,20 @@
                 createdAt: new Date().toISOString()
             };
 
-            saveTests(tests);
+            // Save to cloud storage
+            saveTestToCloud(test);
+            
             alert('✅ Test saved successfully! Access code: ' + code);
             currentQuestions = [];
             document.getElementById('testTitle').value = 'English Grammar Test';
             document.getElementById('testCode').value = 'ENG' + Date.now().toString().slice(-4);
             renderQuestions();
             loadTestsList();
-        }
-
-        function getTests() {
-            return JSON.parse(localStorage.getItem(TESTS_KEY)) || {};
-        }
-
-        function saveTests(tests) {
-            localStorage.setItem(TESTS_KEY, JSON.stringify(tests));
+            generateShareLink(); // Regenerate share link
         }
 
         function loadTestsList() {
-            const tests = getTests();
+            const tests = getTestsFromCloud();
             const container = document.getElementById('testsList');
             
             if (Object.keys(tests).length === 0) {
@@ -650,7 +740,7 @@
         }
 
         function loadTest(testId) {
-            const tests = getTests();
+            const tests = getTestsFromCloud();
             const test = tests[testId];
             
             if (test) {
@@ -664,10 +754,11 @@
 
         function deleteTest(testId) {
             if (confirm('Delete this test?')) {
-                const tests = getTests();
+                const tests = getTestsFromCloud();
                 delete tests[testId];
-                saveTests(tests);
+                saveTestToCloud(tests[Object.keys(tests)[0]]); // Save remaining tests
                 loadTestsList();
+                generateShareLink();
             }
         }
 
@@ -686,12 +777,11 @@
                 return;
             }
 
-            // Find test by code
-            const tests = getTests();
-            const test = Object.values(tests).find(t => t.code === testCode);
+            // Find test by code from CLOUD storage
+            const test = getTestByCodeFromCloud(testCode);
             
             if (!test) {
-                alert('Test not found! Check the access code.');
+                alert('Test not found! Check the access code. Make sure you opened the shared link from your teacher.');
                 return;
             }
 
@@ -737,12 +827,10 @@
         }
 
         function takeScreenshot(reason) {
-            // In a real implementation, you would use html2canvas library
-            // For now, we'll simulate screenshots with timestamps
+            // Simulate screenshots with timestamps
             const screenshot = {
                 timestamp: new Date().toISOString(),
                 reason: reason,
-                // In real implementation: image: canvas.toDataURL()
                 description: `Screenshot taken at ${new Date().toLocaleTimeString()} (${reason})`
             };
             
@@ -851,7 +939,6 @@
 
         function updateBlankAnswer(questionId, element) {
             if (!studentAnswers[questionId]) studentAnswers[questionId] = [];
-            // Store blank answers
             studentAnswers[questionId].push(element.value);
         }
 
@@ -897,9 +984,8 @@
         }
 
         function calculateQuestionScore(question, studentAnswer) {
-            // Implementation depends on question type
-            // This is a simplified version
-            return question.points; // Placeholder
+            // Simplified scoring - in real implementation, implement proper scoring logic
+            return question.points; 
         }
 
         function formatStudentAnswer(question, answer) {
@@ -1009,17 +1095,6 @@
                         </div>
                     </div>
 
-                    <div class="screenshot-gallery">
-                        ${result.screenshots.slice(-3).map(shot => `
-                            <div class="screenshot-item">
-                                <div style="background: #e0e0e0; height: 100px; display: flex; align-items: center; justify-content: center; border-radius: 5px;">
-                                    📸 ${shot.reason}
-                                </div>
-                                <small>${new Date(shot.timestamp).toLocaleTimeString()}</small>
-                            </div>
-                        `).join('')}
-                    </div>
-
                     <button class="btn" onclick="viewDetailedResult(${index})">📋 View Details</button>
                     <button class="btn btn-danger" onclick="deleteResult(${index})">🗑️ Delete</button>
                 </div>
@@ -1063,7 +1138,15 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadTestsList();
-            addQuestion('multiple'); // Start with a multiple choice question
+            addQuestion('multiple');
+            
+            // Show notification if tests are loaded from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('tests')) {
+                setTimeout(() => {
+                    alert('📚 Tests loaded successfully! Students can now take tests using the access codes.');
+                }, 1000);
+            }
         });
     </script>
 </body>
