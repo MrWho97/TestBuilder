@@ -223,17 +223,23 @@
             background: #ff4444 !important;
             animation: pulse 2s infinite;
         }
-        @keyframes pulse {
-            0% { background-color: #ff4444; }
-            50% { background-color: #ff6666; }
-            100% { background-color: #ff4444; }
-        }
         .student-answers {
             background: #f8f9fa;
             padding: 15px;
             border-radius: 8px;
             margin: 10px 0;
             border-left: 4px solid #3498db;
+        }
+        .results-section {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        @keyframes pulse {
+            0% { background-color: #ff4444; }
+            50% { background-color: #ff6666; }
+            100% { background-color: #ff4444; }
         }
         @media (max-width: 768px) {
             .container {
@@ -350,9 +356,19 @@
             <div id="resultsContent" style="display: none;">
                 <div class="card">
                     <h2>📊 Student Results</h2>
+                    
+                    <div class="results-section">
+                        <h4>🔗 Results Share Link</h4>
+                        <p>Use this link to access results from any device:</p>
+                        <input type="text" id="resultsUrlInput" readonly style="width: 100%; padding: 10px; margin: 10px 0;">
+                        <button class="btn" onclick="copyResultsLink()">📋 Copy Results Link</button>
+                        <button class="btn" onclick="loadCloudResults()">🔄 Refresh Results</button>
+                    </div>
+                    
                     <div id="resultsList">
                         <!-- Results will appear here -->
                     </div>
+                    
                     <button class="btn" onclick="exportResults()">📥 Export Results</button>
                     <button class="btn btn-danger" onclick="clearResults()">🗑️ Clear All Results</button>
                 </div>
@@ -372,25 +388,20 @@
         let studentAnswers = {};
         let monitoringData = {};
 
-        // ==================== CLOUD STORAGE SOLUTION ====================
+        // ==================== CLOUD STORAGE FOR TESTS ====================
         
         function saveAllTestsToCloud(tests) {
-            // Save to both URL and localStorage
             const testsString = btoa(JSON.stringify(tests));
-            const newUrl = window.location.origin + window.location.pathname + '?tests=' + encodeURIComponent(testsString);
+            const newUrl = updateUrlParameter('tests', testsString);
             window.history.replaceState({}, '', newUrl);
             
-            // Also save to localStorage as backup
             localStorage.setItem(TESTS_KEY, JSON.stringify(tests));
-            
-            // Update share link
             updateShareLink();
             
             return tests;
         }
 
         function getTestsFromCloud() {
-            // Try to get from URL first
             const urlParams = new URLSearchParams(window.location.search);
             const urlTests = urlParams.get('tests');
             
@@ -404,14 +415,49 @@
                 }
             }
             
-            // Fallback to localStorage
             return JSON.parse(localStorage.getItem(TESTS_KEY)) || {};
         }
 
-        function getTestByCodeFromCloud(code) {
-            const tests = getTestsFromCloud();
-            return Object.values(tests).find(test => test.code === code);
+        // ==================== CLOUD STORAGE FOR RESULTS ====================
+
+        function saveAllResultsToCloud(results) {
+            const resultsString = btoa(JSON.stringify(results));
+            const newUrl = updateUrlParameter('results', resultsString);
+            window.history.replaceState({}, '', newUrl);
+            
+            localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
+            updateResultsLink();
+            
+            return results;
         }
+
+        function getResultsFromCloud() {
+            // Try to get from URL first (cloud storage)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlResults = urlParams.get('results');
+            
+            if (urlResults) {
+                try {
+                    const results = JSON.parse(atob(urlResults));
+                    // Also save to localStorage as backup
+                    localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
+                    return results;
+                } catch (e) {
+                    console.log('Error parsing URL results');
+                }
+            }
+            
+            // Fallback to localStorage
+            return JSON.parse(localStorage.getItem(RESULTS_KEY)) || [];
+        }
+
+        function updateUrlParameter(param, value) {
+            const url = new URL(window.location);
+            url.searchParams.set(param, value);
+            return url.toString();
+        }
+
+        // ==================== SHARE LINKS ====================
 
         function updateShareLink() {
             const tests = getTestsFromCloud();
@@ -421,7 +467,7 @@
             }
 
             const testsString = btoa(JSON.stringify(tests));
-            const shareUrl = window.location.origin + window.location.pathname + '?tests=' + encodeURIComponent(testsString);
+            const shareUrl = updateUrlParameter('tests', testsString);
             
             const shareSection = document.getElementById('shareSection');
             shareSection.innerHTML = `
@@ -434,12 +480,38 @@
             shareSection.style.display = 'block';
         }
 
+        function updateResultsLink() {
+            const results = getResultsFromCloud();
+            const resultsString = btoa(JSON.stringify(results));
+            const resultsUrl = updateUrlParameter('results', resultsString);
+            
+            const resultsInput = document.getElementById('resultsUrlInput');
+            if (resultsInput) {
+                resultsInput.value = resultsUrl;
+            }
+        }
+
         function copyShareLink() {
             const input = document.getElementById('shareUrlInput');
             input.select();
             navigator.clipboard.writeText(input.value).then(() => {
                 alert('Link copied to clipboard!');
             });
+        }
+
+        function copyResultsLink() {
+            const input = document.getElementById('resultsUrlInput');
+            input.select();
+            navigator.clipboard.writeText(input.value).then(() => {
+                alert('Results link copied to clipboard!');
+            });
+        }
+
+        function loadCloudResults() {
+            // Force reload from cloud
+            const results = getResultsFromCloud();
+            loadResultsList(results);
+            alert('Results refreshed from cloud!');
         }
 
         // ==================== PASSWORD PROTECTION ====================
@@ -462,6 +534,7 @@
                 document.querySelector('#results .password-protected').style.display = 'none';
                 document.getElementById('resultsContent').style.display = 'block';
                 loadResultsList();
+                updateResultsLink();
             } else {
                 alert('Incorrect password!');
             }
@@ -619,7 +692,7 @@
             });
         }
 
-        // Question editing functions
+        // Question editing functions (same as before)
         function updateQuestionText(id, text) {
             const q = currentQuestions.find(q => q.id === id);
             if (q) q.text = text;
@@ -734,7 +807,6 @@
                 createdAt: new Date().toISOString()
             };
 
-            // Save to cloud storage
             const tests = getTestsFromCloud();
             tests[testId] = test;
             saveAllTestsToCloud(tests);
@@ -786,12 +858,16 @@
                 const tests = getTestsFromCloud();
                 if (tests[testId]) {
                     delete tests[testId];
-                    // Save remaining tests to cloud
                     saveAllTestsToCloud(tests);
                     loadTestsList();
                     alert('Test deleted successfully!');
                 }
             }
+        }
+
+        function getTestByCodeFromCloud(code) {
+            const tests = getTestsFromCloud();
+            return Object.values(tests).find(test => test.code === code);
         }
 
         // ==================== STUDENT TEST TAKING ====================
@@ -810,7 +886,6 @@
                 return;
             }
 
-            // Find test by code from CLOUD storage
             const test = getTestByCodeFromCloud(testCode);
             
             if (!test) {
@@ -821,7 +896,6 @@
             currentTest = test;
             studentAnswers = {};
             
-            // Initialize monitoring (ONLY tab switching detection)
             monitoringData = {
                 studentName: studentName,
                 testCode: testCode,
@@ -831,18 +905,12 @@
                 answers: {}
             };
 
-            console.log('Starting test with tab switching monitoring...');
-            
-            // Start monitoring
             startMonitoring();
             renderTestInterface();
         }
 
         function startMonitoring() {
-            // Tab switch detection only
             document.addEventListener('visibilitychange', handleVisibilityChange);
-            
-            // Add visual indicator that monitoring is active
             const studentTab = document.querySelector('.tab[onclick="showTab(\'student\')"]');
             studentTab.classList.add('monitoring-active');
         }
@@ -850,9 +918,6 @@
         function handleVisibilityChange() {
             if (document.hidden) {
                 monitoringData.tabSwitches++;
-                console.log(`Tab switched! Total switches: ${monitoringData.tabSwitches}`);
-                
-                // Update display if available
                 const tabSwitchElement = document.getElementById('tabSwitchCount');
                 if (tabSwitchElement) {
                     tabSwitchElement.textContent = monitoringData.tabSwitches;
@@ -961,36 +1026,26 @@
             } else {
                 studentAnswers[questionId] = element.value;
             }
-            console.log('Student answers updated:', studentAnswers);
         }
 
         function updateMatchingAnswer(questionId, pairIndex, value) {
             if (!studentAnswers[questionId]) studentAnswers[questionId] = [];
             studentAnswers[questionId][pairIndex] = value;
-            console.log('Matching answer updated:', studentAnswers);
         }
 
         function updateBlankAnswer(questionId, element) {
             if (!studentAnswers[questionId]) studentAnswers[questionId] = [];
             studentAnswers[questionId].push(element.value);
-            console.log('Blank answer updated:', studentAnswers);
         }
 
         function finishTest() {
-            // Stop monitoring
             document.removeEventListener('visibilitychange', handleVisibilityChange);
-            
-            // Remove visual indicator
             const studentTab = document.querySelector('.tab[onclick="showTab(\'student\')"]');
             studentTab.classList.remove('monitoring-active');
 
             monitoringData.endTime = new Date().toISOString();
             monitoringData.answers = studentAnswers;
 
-            console.log('Test finished. Monitoring data:', monitoringData);
-            console.log('Student answers:', studentAnswers);
-
-            // Calculate results
             let totalScore = 0;
             let maxScore = 0;
             const details = [];
@@ -1010,34 +1065,30 @@
                 });
             });
 
-            // Save result
             const result = {
                 ...monitoringData,
                 score: totalScore,
                 maxScore: maxScore,
                 percentage: Math.round((totalScore / maxScore) * 100),
                 details: details,
-                // Save complete student answers for professor review
                 completeStudentAnswers: studentAnswers
             };
 
-            const results = getResults();
+            // Save to CLOUD storage (not just localStorage)
+            const results = getResultsFromCloud();
             results.push(result);
-            saveResults(results);
+            saveAllResultsToCloud(results);
 
             showTestResults(result);
         }
 
         function calculateQuestionScore(question, studentAnswer) {
-            // Simplified scoring - implement proper logic based on question type
-            // For now, give full points for demonstration
             return question.points; 
         }
 
         function formatStudentAnswer(question, answer) {
             if (Array.isArray(answer)) {
                 if (question.type === 'multiple') {
-                    // For multiple choice, show selected option texts
                     const selectedOptions = question.choices.filter(choice => 
                         answer.includes(choice.id.toString())
                     ).map(choice => choice.text);
@@ -1077,6 +1128,9 @@
                             <div>Tab Switches</div>
                         </div>
                     </div>
+                    <div class="card warning">
+                        <strong>✅ Results saved to cloud! Your professor can now see your results.</strong>
+                    </div>
                 </div>
             `;
 
@@ -1099,24 +1153,16 @@
 
         // ==================== RESULTS MANAGEMENT ====================
 
-        function getResults() {
-            return JSON.parse(localStorage.getItem(RESULTS_KEY)) || [];
-        }
-
-        function saveResults(results) {
-            localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
-        }
-
-        function loadResultsList() {
-            const results = getResults();
+        function loadResultsList(results = null) {
+            const resultsData = results || getResultsFromCloud();
             const container = document.getElementById('resultsList');
 
-            if (results.length === 0) {
-                container.innerHTML = '<p>No results yet</p>';
+            if (resultsData.length === 0) {
+                container.innerHTML = '<p>No results yet. Students need to complete tests first.</p>';
                 return;
             }
 
-            container.innerHTML = results.map((result, index) => `
+            container.innerHTML = resultsData.map((result, index) => `
                 <div class="card">
                     <h3>${result.studentName} - ${result.testTitle}</h3>
                     <p><strong>Score:</strong> ${result.score}/${result.maxScore} (${result.percentage}%)</p>
@@ -1142,7 +1188,7 @@
         }
 
         function viewDetailedResult(index) {
-            const results = getResults();
+            const results = getResultsFromCloud();
             const result = results[index];
             
             let details = `Detailed Results:\n\nStudent: ${result.studentName}\nTest: ${result.testTitle}\nScore: ${result.score}/${result.maxScore} (${result.percentage}%)\n\n`;
@@ -1161,15 +1207,15 @@
 
         function deleteResult(index) {
             if (confirm('Delete this result?')) {
-                const results = getResults();
+                const results = getResultsFromCloud();
                 results.splice(index, 1);
-                saveResults(results);
+                saveAllResultsToCloud(results);
                 loadResultsList();
             }
         }
 
         function exportResults() {
-            const results = getResults();
+            const results = getResultsFromCloud();
             const dataStr = JSON.stringify(results, null, 2);
             const dataBlob = new Blob([dataStr], {type: 'application/json'});
             
@@ -1181,7 +1227,7 @@
 
         function clearResults() {
             if (confirm('Clear all results?')) {
-                saveResults([]);
+                saveAllResultsToCloud([]);
                 loadResultsList();
             }
         }
@@ -1189,14 +1235,14 @@
         // ==================== INITIALIZATION ====================
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if we have tests in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('tests')) {
-                console.log('Tests loaded from URL');
-            }
-            
             // Default tab is Student
             showTab('student');
+            
+            // Check if we have results in URL and show notification
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('results')) {
+                console.log('Results loaded from cloud storage');
+            }
         });
     </script>
 </body>
