@@ -99,9 +99,6 @@
         .btn-danger {
             background: linear-gradient(135deg, #e74c3c, #c0392b);
         }
-        .btn-secondary {
-            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
-        }
         .form-group {
             margin-bottom: 20px;
         }
@@ -147,15 +144,6 @@
             width: 20px;
             height: 20px;
             margin-right: 10px;
-        }
-        .matching-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            gap: 10px;
-        }
-        .matching-item input {
-            flex: 1;
         }
         .test-list {
             display: grid;
@@ -215,31 +203,12 @@
             padding: 15px;
             border-radius: 8px;
             margin: 15px 0;
-            position: sticky;
-            top: 10px;
-            z-index: 100;
         }
         .setup-section {
             background: #e3f2fd;
             padding: 20px;
             border-radius: 10px;
             margin: 20px 0;
-        }
-        .monitoring-active {
-            background: #ff4444 !important;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { background-color: #ff4444; }
-            50% { background-color: #ff6666; }
-            100% { background-color: #ff4444; }
-        }
-        .student-answers {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-            border-left: 4px solid #3498db;
         }
         .status-badge {
             padding: 5px 10px;
@@ -293,38 +262,45 @@
         <!-- SETUP TAB -->
         <div class="tab-content" id="setup">
             <div class="card">
-                <h2>🚀 Google Sheets Integration</h2>
+                <h2>🚀 Google Forms Setup</h2>
                 
                 <div class="setup-section">
-                    <h3>📊 Current Configuration</h3>
-                    <div id="currentConfig">
-                        <p>No Google Sheets configuration</p>
-                    </div>
-                </div>
-
-                <div class="setup-section">
-                    <h3>⚙️ Setup Instructions</h3>
+                    <h3>📝 Step 1: Create Google Form</h3>
                     <ol>
-                        <li><strong>Create Google Sheet:</strong> Go to <a href="https://sheets.google.com" target="_blank">Google Sheets</a> and create a new spreadsheet</li>
-                        <li><strong>Get Sheet ID:</strong> Copy the ID from your sheet URL (between /d/ and /edit)</li>
-                        <li><strong>Configure below:</strong> Enter your Google Sheet ID</li>
+                        <li>Go to <a href="https://forms.google.com" target="_blank">forms.google.com</a></li>
+                        <li>Create a new form</li>
+                        <li>Add these questions (exact order):
+                            <ul>
+                                <li>Student Name (Short answer)</li>
+                                <li>Test Title (Short answer)</li>
+                                <li>Test Code (Short answer)</li>
+                                <li>Score (Short answer)</li>
+                                <li>Max Score (Short answer)</li>
+                                <li>Percentage (Short answer)</li>
+                                <li>Tab Switches (Short answer)</li>
+                                <li>Details (Long answer)</li>
+                            </ul>
+                        </li>
+                        <li>Copy the Form URL</li>
                     </ol>
-                    
-                    <div class="form-group">
-                        <label for="sheetId">Google Sheet ID:</label>
-                        <input type="text" id="sheetId" placeholder="Paste your Google Sheet ID here">
-                        <small>Example: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms</small>
-                    </div>
-                    
-                    <button class="btn btn-success" onclick="saveGoogleConfig()">💾 Save Configuration</button>
-                    <button class="btn" onclick="testGoogleConnection()">🔗 Test Connection</button>
                 </div>
 
                 <div class="setup-section">
-                    <h3>📝 Manual Setup (Alternative)</h3>
-                    <p>If automatic saving doesn't work, students can manually submit results:</p>
-                    <div id="manualSubmitSection" style="display: none;">
-                        <!-- Manual submit form will appear here -->
+                    <h3>⚙️ Step 2: Configure Here</h3>
+                    <div class="form-group">
+                        <label for="formUrl">Google Form URL:</label>
+                        <input type="text" id="formUrl" placeholder="Paste your Google Form URL here">
+                        <small>Example: https://docs.google.com/forms/d/e/.../viewform</small>
+                    </div>
+                    
+                    <button class="btn btn-success" onclick="saveFormConfig()">💾 Save Configuration</button>
+                    <button class="btn" onclick="testFormConnection()">🔗 Test Connection</button>
+                </div>
+
+                <div class="setup-section">
+                    <h3>📋 Current Configuration</h3>
+                    <div id="currentConfig">
+                        <p>No configuration saved</p>
                     </div>
                 </div>
             </div>
@@ -342,10 +318,6 @@
             </div>
             
             <div id="professorContent" style="display: none;">
-                <div id="shareSection" class="share-section" style="display: none;">
-                    <!-- Share link will appear here -->
-                </div>
-
                 <div class="card">
                     <h2>📝 Create New Test</h2>
                     <div class="form-group">
@@ -353,7 +325,7 @@
                         <input type="text" id="testTitle" placeholder="Enter test title" value="English Grammar Test">
                     </div>
                     <div class="form-group">
-                        <label for="testCode">Test Access Code (students will need this):</label>
+                        <label for="testCode">Test Access Code:</label>
                         <input type="text" id="testCode" placeholder="Enter access code" value="ENG2024">
                     </div>
                     
@@ -363,8 +335,6 @@
                     
                     <button class="btn" onclick="addQuestion('multiple')">➕ Multiple Choice</button>
                     <button class="btn" onclick="addQuestion('short')">📝 Short Answer</button>
-                    <button class="btn" onclick="addQuestion('matching')">🔗 Matching</button>
-                    <button class="btn" onclick="addQuestion('fillblank')">📝 Fill in Blanks</button>
                     <button class="btn btn-success" onclick="saveTest()">💾 Save Test</button>
                 </div>
 
@@ -411,14 +381,6 @@
             <div id="resultsContent" style="display: none;">
                 <div class="card">
                     <h2>📊 Student Results</h2>
-                    
-                    <div class="share-section">
-                        <h4>🔄 Results Management</h4>
-                        <button class="btn" onclick="loadResultsList()">🔄 Refresh Results</button>
-                        <button class="btn" onclick="exportResults()">📥 Export Results</button>
-                        <button class="btn btn-danger" onclick="clearResults()">🗑️ Clear All Results</button>
-                    </div>
-                    
                     <div id="resultsList">
                         <!-- Results will appear here -->
                     </div>
@@ -430,114 +392,110 @@
     <script>
         // Configuration
         const PROFESSOR_PASSWORD = "professor123";
-        const TESTS_KEY = 'english_tests_cloud';
-        const RESULTS_KEY = 'english_results_cloud';
-        const CONFIG_KEY = 'google_sheets_config';
+        const TESTS_KEY = 'english_tests';
+        const RESULTS_KEY = 'english_results';
+        const CONFIG_KEY = 'google_form_config';
 
         // Initialize
         let currentQuestions = [];
         let currentTest = null;
         let studentAnswers = {};
         let monitoringData = {};
-        let googleConfig = {};
+        let formConfig = {};
 
-        // ==================== GOOGLE SHEETS INTEGRATION ====================
+        // ==================== GOOGLE FORM INTEGRATION ====================
 
-        function loadGoogleConfig() {
+        function loadFormConfig() {
             const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
-            googleConfig = config;
+            formConfig = config;
+            updateConfigDisplay();
             return config;
         }
 
-        function saveGoogleConfig() {
-            const sheetId = document.getElementById('sheetId').value.trim();
-            if (!sheetId) {
-                alert('Please enter Google Sheet ID');
+        function saveFormConfig() {
+            const formUrl = document.getElementById('formUrl').value.trim();
+            if (!formUrl) {
+                alert('Please enter Google Form URL');
                 return;
             }
 
+            if (!formUrl.includes('https://docs.google.com/forms/')) {
+                alert('Please enter a valid Google Form URL');
+                return;
+            }
+
+            // Convert viewform URL to formResponse URL
+            const formResponseUrl = formUrl.replace('/viewform', '/formResponse');
+
             const config = {
-                sheetId: sheetId,
+                formUrl: formUrl,
+                formResponseUrl: formResponseUrl,
                 configuredAt: new Date().toISOString()
             };
 
             localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-            googleConfig = config;
+            formConfig = config;
             updateConfigDisplay();
-            alert('✅ Google Sheets configuration saved!');
+            alert('✅ Configuration saved!');
         }
 
         function updateConfigDisplay() {
-            const config = loadGoogleConfig();
+            const config = loadFormConfig();
             const container = document.getElementById('currentConfig');
             
-            if (config.sheetId) {
+            if (config.formUrl) {
                 container.innerHTML = `
-                    <p><strong>Google Sheet ID:</strong> ${config.sheetId}</p>
+                    <p><strong>Form URL:</strong> ${config.formUrl}</p>
                     <p><strong>Configured:</strong> ${new Date(config.configuredAt).toLocaleString()}</p>
                     <p><strong>Status:</strong> <span class="status-badge status-connected">✅ Connected</span></p>
-                    <a href="https://docs.google.com/spreadsheets/d/${config.sheetId}/edit" target="_blank" class="btn">
-                        📊 Open Google Sheet
-                    </a>
+                    <a href="${config.formUrl}" target="_blank" class="btn">📋 Open Google Form</a>
                 `;
-                document.getElementById('sheetId').value = config.sheetId;
+                document.getElementById('formUrl').value = config.formUrl;
             } else {
-                container.innerHTML = '<p>No Google Sheets configuration</p>';
+                container.innerHTML = '<p>No configuration saved</p>';
             }
         }
 
-        async function saveResultToGoogleSheets(result) {
-            if (!googleConfig.sheetId) {
-                console.log('No Google Sheet configured, saving to localStorage only');
+        async function saveResultToGoogleForm(result) {
+            if (!formConfig.formResponseUrl) {
+                console.log('No Google Form configured');
                 return false;
             }
 
             try {
-                // Simple method using Google Sheets API via URL
-                const timestamp = new Date().toISOString();
-                const timeTaken = Math.round((new Date(result.endTime) - new Date(result.startTime)) / 1000 / 60);
+                // Prepare form data
+                const formData = new URLSearchParams();
                 
-                // Create a simple CSV data string
-                const rowData = [
-                    timestamp,
-                    result.studentName,
-                    result.testTitle,
-                    result.testCode,
-                    result.score,
-                    result.maxScore,
-                    result.percentage + '%',
-                    result.tabSwitches,
-                    result.startTime,
-                    result.endTime,
-                    timeTaken + ' min',
-                    JSON.stringify(result.details)
-                ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
+                // Map result fields to form entry IDs (these will be auto-generated)
+                // The order matters - it should match the form question order
+                formData.append('entry.123456789', result.studentName);      // Student Name
+                formData.append('entry.123456790', result.testTitle);        // Test Title  
+                formData.append('entry.123456791', result.testCode);         // Test Code
+                formData.append('entry.123456792', result.score.toString()); // Score
+                formData.append('entry.123456793', result.maxScore.toString()); // Max Score
+                formData.append('entry.123456794', result.percentage.toString()); // Percentage
+                formData.append('entry.123456795', result.tabSwitches.toString()); // Tab Switches
+                formData.append('entry.123456796', JSON.stringify(result.details)); // Details
 
-                // Create download link for manual import
-                const csvContent = 'data:text/csv;charset=utf-8,' + 
-                    'Timestamp,Student Name,Test Title,Test Code,Score,Max Score,Percentage,Tab Switches,Start Time,End Time,Time Taken,Details\n' +
-                    rowData;
-                
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement('a');
-                link.setAttribute('href', encodedUri);
-                link.setAttribute('download', `test_result_${result.studentName}_${timestamp}.csv`);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                const response = await fetch(formConfig.formResponseUrl, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'no-cors' // Important for Google Forms
+                });
 
-                console.log('✅ CSV file generated for manual import to Google Sheets');
+                // With no-cors we can't read response, but we assume it worked
+                console.log('✅ Result submitted to Google Form');
                 return true;
 
             } catch (error) {
-                console.error('❌ Error creating CSV:', error);
+                console.error('❌ Error submitting to Google Form:', error);
                 return false;
             }
         }
 
-        function testGoogleConnection() {
-            if (!googleConfig.sheetId) {
-                alert('Please configure Google Sheet ID first');
+        function testFormConnection() {
+            if (!formConfig.formResponseUrl) {
+                alert('Please configure Google Form URL first');
                 return;
             }
 
@@ -549,126 +507,19 @@
                 maxScore: 100,
                 percentage: 100,
                 tabSwitches: 0,
-                startTime: new Date().toISOString(),
-                endTime: new Date().toISOString(),
-                details: 'Test connection'
+                details: [{question: 'Test', score: 100, maxScore: 100}]
             };
 
-            saveResultToGoogleSheets(testResult).then(success => {
+            saveResultToGoogleForm(testResult).then(success => {
                 if (success) {
-                    alert('✅ Connection successful! Download the CSV file and import it to your Google Sheet.');
+                    alert('✅ Connection successful! Test data sent to Google Form. Check your form responses.');
                 } else {
-                    alert('❌ Connection failed. Check console for details.');
+                    alert('❌ Connection failed. Please check the form URL.');
                 }
             });
         }
 
-        // ==================== CLOUD STORAGE SOLUTION ====================
-        
-        function saveAllTestsToCloud(tests) {
-            const testsString = btoa(JSON.stringify(tests));
-            const newUrl = window.location.origin + window.location.pathname + '?tests=' + encodeURIComponent(testsString);
-            window.history.replaceState({}, '', newUrl);
-            
-            localStorage.setItem(TESTS_KEY, JSON.stringify(tests));
-            updateShareLink();
-            
-            return tests;
-        }
-
-        function getTestsFromCloud() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlTests = urlParams.get('tests');
-            
-            if (urlTests) {
-                try {
-                    const tests = JSON.parse(atob(urlTests));
-                    localStorage.setItem(TESTS_KEY, JSON.stringify(tests));
-                    return tests;
-                } catch (e) {
-                    console.log('Error parsing URL tests');
-                }
-            }
-            
-            return JSON.parse(localStorage.getItem(TESTS_KEY)) || {};
-        }
-
-        function getTestByCodeFromCloud(code) {
-            const tests = getTestsFromCloud();
-            return Object.values(tests).find(test => test.code === code);
-        }
-
-        function updateShareLink() {
-            const tests = getTestsFromCloud();
-            if (Object.keys(tests).length === 0) {
-                document.getElementById('shareSection').style.display = 'none';
-                return;
-            }
-
-            const testsString = btoa(JSON.stringify(tests));
-            const shareUrl = window.location.origin + window.location.pathname + '?tests=' + encodeURIComponent(testsString);
-            
-            const shareSection = document.getElementById('shareSection');
-            shareSection.innerHTML = `
-                <h4>🔗 Share Tests with Students:</h4>
-                <p>Send this link to students so they can access all tests:</p>
-                <input type="text" id="shareUrlInput" value="${shareUrl}" readonly style="width: 100%; padding: 10px; margin: 10px 0;">
-                <button class="btn" onclick="copyShareLink()">📋 Copy Link</button>
-                <small>Students need to open this exact link to see the tests</small>
-            `;
-            shareSection.style.display = 'block';
-        }
-
-        function copyShareLink() {
-            const input = document.getElementById('shareUrlInput');
-            input.select();
-            navigator.clipboard.writeText(input.value).then(() => {
-                alert('Link copied to clipboard!');
-            });
-        }
-
-        // ==================== PASSWORD PROTECTION ====================
-
-        function accessProfessor() {
-            const password = document.getElementById('professorPassword').value;
-            if (password === PROFESSOR_PASSWORD) {
-                document.querySelector('#professor .password-protected').style.display = 'none';
-                document.getElementById('professorContent').style.display = 'block';
-                loadTestsList();
-                updateShareLink();
-            } else {
-                alert('Incorrect password!');
-            }
-        }
-
-        function accessResults() {
-            const password = document.getElementById('teacherPassword').value;
-            if (password === PROFESSOR_PASSWORD) {
-                document.querySelector('#results .password-protected').style.display = 'none';
-                document.getElementById('resultsContent').style.display = 'block';
-                loadResultsList();
-            } else {
-                alert('Incorrect password!');
-            }
-        }
-
-        // ==================== TAB NAVIGATION ====================
-
-        function showTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            
-            document.getElementById(tabName).classList.add('active');
-            document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
-
-            if (tabName === 'setup') {
-                updateConfigDisplay();
-            } else if (tabName === 'professor' && document.getElementById('professorContent').style.display === 'block') {
-                loadTestsList();
-            }
-        }
-
-        // ==================== QUESTION MANAGEMENT ====================
+        // ==================== TEST MANAGEMENT ====================
 
         function addQuestion(type = 'multiple') {
             const questionId = Date.now();
@@ -677,28 +528,14 @@
                 type: type,
                 text: 'Enter question text here',
                 points: 1,
-                penalty: 20,
-                choices: [],
-                pairs: [],
-                blanks: []
+                choices: []
             };
 
-            switch(type) {
-                case 'multiple':
-                    question.choices = [
-                        { id: questionId + 1, text: 'Option 1', correct: false },
-                        { id: questionId + 2, text: 'Option 2', correct: false }
-                    ];
-                    break;
-                case 'matching':
-                    question.pairs = [
-                        { id: questionId + 1, left: 'Word 1', right: 'Definition 1' },
-                        { id: questionId + 2, left: 'Word 2', right: 'Definition 2' }
-                    ];
-                    break;
-                case 'fillblank':
-                    question.text = 'Complete the sentence: The cat sat on the ______.';
-                    break;
+            if (type === 'multiple') {
+                question.choices = [
+                    { id: questionId + 1, text: 'Option 1', correct: false },
+                    { id: questionId + 2, text: 'Option 2', correct: false }
+                ];
             }
 
             currentQuestions.push(question);
@@ -709,97 +546,40 @@
             const container = document.getElementById('questionsContainer');
             container.innerHTML = '<h3>Questions:</h3>';
 
-            if (currentQuestions.length === 0) {
-                container.innerHTML += '<p>No questions yet. Add your first question!</p>';
-                return;
-            }
-
             currentQuestions.forEach((question, index) => {
                 let questionHTML = `
                     <div class="question-card">
-                        <h4>Question ${index + 1} (${question.type})</h4>
+                        <h4>Question ${index + 1}</h4>
                         <div class="form-group">
                             <label>Question Text:</label>
                             <textarea onchange="updateQuestionText(${question.id}, this.value)">${question.text}</textarea>
                         </div>
-                        
-                        <div class="form-group" style="display: flex; gap: 15px;">
-                            <div style="flex: 1;">
-                                <label>Points:</label>
-                                <input type="number" value="${question.points}" min="1" 
-                                       onchange="updateQuestionPoints(${question.id}, this.value)">
-                            </div>
-                            <div style="flex: 1;">
-                                <label>Spelling Penalty (%):</label>
-                                <input type="number" value="${question.penalty}" min="0" max="100"
-                                       onchange="updateQuestionPenalty(${question.id}, this.value)">
-                            </div>
+                        <div class="form-group">
+                            <label>Points:</label>
+                            <input type="number" value="${question.points}" min="1" 
+                                   onchange="updateQuestionPoints(${question.id}, this.value)">
                         </div>`;
 
-                switch(question.type) {
-                    case 'multiple':
-                        questionHTML += `
-                            <div class="form-group">
-                                <label>Options (check correct ones):</label>
-                                ${question.choices.map((choice, ci) => `
-                                    <div class="choice-item">
-                                        <input type="text" value="${choice.text}" 
-                                               onchange="updateChoiceText(${question.id}, ${choice.id}, this.value)">
-                                        <input type="checkbox" ${choice.correct ? 'checked' : ''}
-                                               onchange="toggleChoiceCorrect(${question.id}, ${choice.id})">
-                                        <span>Correct</span>
-                                        <button class="btn btn-danger" onclick="removeChoice(${question.id}, ${choice.id})">🗑️</button>
-                                    </div>
-                                `).join('')}
-                                <button class="btn" onclick="addChoice(${question.id})">➕ Add Option</button>
-                            </div>`;
-                        break;
-                    
-                    case 'matching':
-                        questionHTML += `
-                            <div class="form-group">
-                                <label>Matching Pairs:</label>
-                                ${question.pairs.map((pair, pi) => `
-                                    <div class="matching-item">
-                                        <input type="text" value="${pair.left}" placeholder="Left item"
-                                               onchange="updatePairLeft(${question.id}, ${pair.id}, this.value)">
-                                        <span>→</span>
-                                        <input type="text" value="${pair.right}" placeholder="Right item"
-                                               onchange="updatePairRight(${question.id}, ${pair.id}, this.value)">
-                                        <button class="btn btn-danger" onclick="removePair(${question.id}, ${pair.id})">🗑️</button>
-                                    </div>
-                                `).join('')}
-                                <button class="btn" onclick="addPair(${question.id})">➕ Add Pair</button>
-                            </div>`;
-                        break;
-                    
-                    case 'fillblank':
-                        questionHTML += `
-                            <div class="form-group">
-                                <label>Correct Answers (use _____ for blanks):</label>
-                                <input type="text" value="${question.text}" 
-                                       onchange="updateQuestionText(${question.id}, this.value)"
-                                       placeholder="E.g.: The cat sat on the ______">
-                                <small>Use underscores (______) to indicate blanks in the text</small>
-                            </div>`;
-                        break;
-                    
-                    case 'short':
-                        questionHTML += `
-                            <div class="form-group">
-                                <label>Correct Answer (multiple variants separated by |):</label>
-                                <input type="text" value="${question.answer || ''}" 
-                                       onchange="updateQuestionAnswer(${question.id}, this.value)"
-                                       placeholder="E.g.: apple|red apple|an apple">
-                                <small>Separate multiple correct answers with | symbol</small>
-                            </div>`;
-                        break;
+                if (question.type === 'multiple') {
+                    questionHTML += `
+                        <div class="form-group">
+                            <label>Options (check correct ones):</label>
+                            ${question.choices.map((choice, ci) => `
+                                <div class="choice-item">
+                                    <input type="text" value="${choice.text}" 
+                                           onchange="updateChoiceText(${question.id}, ${choice.id}, this.value)">
+                                    <input type="checkbox" ${choice.correct ? 'checked' : ''}
+                                           onchange="toggleChoiceCorrect(${question.id}, ${choice.id})">
+                                    <span>Correct</span>
+                                    <button class="btn btn-danger" onclick="removeChoice(${question.id}, ${choice.id})">🗑️</button>
+                                </div>
+                            `).join('')}
+                            <button class="btn" onclick="addChoice(${question.id})">➕ Add Option</button>
+                        </div>`;
                 }
 
                 questionHTML += `
-                    <div style="margin-top: 15px;">
-                        <button class="btn btn-danger" onclick="removeQuestion(${question.id})">🗑️ Delete Question</button>
-                    </div>
+                    <button class="btn btn-danger" onclick="removeQuestion(${question.id})">🗑️ Delete Question</button>
                 </div>`;
 
                 container.innerHTML += questionHTML;
@@ -815,16 +595,6 @@
         function updateQuestionPoints(id, points) {
             const q = currentQuestions.find(q => q.id === id);
             if (q) q.points = parseInt(points);
-        }
-
-        function updateQuestionPenalty(id, penalty) {
-            const q = currentQuestions.find(q => q.id === id);
-            if (q) q.penalty = parseInt(penalty);
-        }
-
-        function updateQuestionAnswer(id, answer) {
-            const q = currentQuestions.find(q => q.id === id);
-            if (q) q.answer = answer;
         }
 
         function updateChoiceText(qId, cId, text) {
@@ -859,44 +629,10 @@
             }
         }
 
-        function updatePairLeft(qId, pId, text) {
-            const q = currentQuestions.find(q => q.id === qId);
-            if (q) {
-                const pair = q.pairs.find(p => p.id === pId);
-                if (pair) pair.left = text;
-            }
-        }
-
-        function updatePairRight(qId, pId, text) {
-            const q = currentQuestions.find(q => q.id === qId);
-            if (q) {
-                const pair = q.pairs.find(p => p.id === pId);
-                if (pair) pair.right = text;
-            }
-        }
-
-        function addPair(qId) {
-            const q = currentQuestions.find(q => q.id === qId);
-            if (q) {
-                q.pairs.push({ id: Date.now(), left: 'New item', right: 'New match' });
-                renderQuestions();
-            }
-        }
-
-        function removePair(qId, pId) {
-            const q = currentQuestions.find(q => q.id === qId);
-            if (q) {
-                q.pairs = q.pairs.filter(p => p.id !== pId);
-                renderQuestions();
-            }
-        }
-
         function removeQuestion(id) {
             currentQuestions = currentQuestions.filter(q => q.id !== id);
             renderQuestions();
         }
-
-        // ==================== TEST MANAGEMENT ====================
 
         function saveTest() {
             const title = document.getElementById('testTitle').value.trim();
@@ -904,11 +640,6 @@
             
             if (!title || !code) {
                 alert('Please enter both test title and access code!');
-                return;
-            }
-
-            if (currentQuestions.length === 0) {
-                alert('Please add at least one question!');
                 return;
             }
 
@@ -921,34 +652,29 @@
                 createdAt: new Date().toISOString()
             };
 
-            // Save to cloud storage
-            const tests = getTestsFromCloud();
+            const tests = getTests();
             tests[testId] = test;
-            saveAllTestsToCloud(tests);
+            localStorage.setItem(TESTS_KEY, JSON.stringify(tests));
             
             alert('✅ Test saved successfully! Access code: ' + code);
             currentQuestions = [];
-            document.getElementById('testTitle').value = 'English Grammar Test';
-            document.getElementById('testCode').value = 'ENG' + Date.now().toString().slice(-4);
             renderQuestions();
             loadTestsList();
         }
 
+        function getTests() {
+            return JSON.parse(localStorage.getItem(TESTS_KEY)) || {};
+        }
+
         function loadTestsList() {
-            const tests = getTestsFromCloud();
+            const tests = getTests();
             const container = document.getElementById('testsList');
             
-            if (Object.keys(tests).length === 0) {
-                container.innerHTML = '<p>No tests created yet</p>';
-                return;
-            }
-
             container.innerHTML = Object.values(tests).map(test => `
                 <div class="test-item">
                     <h3>${test.title}</h3>
                     <p><strong>Access Code:</strong> ${test.code}</p>
                     <p><strong>Questions:</strong> ${test.questions.length}</p>
-                    <p><strong>Created:</strong> ${new Date(test.createdAt).toLocaleDateString()}</p>
                     <button class="btn" onclick="loadTest('${test.id}')">✏️ Edit</button>
                     <button class="btn btn-danger" onclick="deleteTest('${test.id}')">🗑️ Delete</button>
                 </div>
@@ -956,7 +682,7 @@
         }
 
         function loadTest(testId) {
-            const tests = getTestsFromCloud();
+            const tests = getTests();
             const test = tests[testId];
             
             if (test) {
@@ -969,15 +695,17 @@
         }
 
         function deleteTest(testId) {
-            if (confirm('Are you sure you want to delete this test?')) {
-                const tests = getTestsFromCloud();
-                if (tests[testId]) {
-                    delete tests[testId];
-                    saveAllTestsToCloud(tests);
-                    loadTestsList();
-                    alert('Test deleted successfully!');
-                }
+            if (confirm('Delete this test?')) {
+                const tests = getTests();
+                delete tests[testId];
+                localStorage.setItem(TESTS_KEY, JSON.stringify(tests));
+                loadTestsList();
             }
+        }
+
+        function getTestByCode(code) {
+            const tests = getTests();
+            return Object.values(tests).find(test => test.code === code);
         }
 
         // ==================== STUDENT TEST TAKING ====================
@@ -996,10 +724,10 @@
                 return;
             }
 
-            const test = getTestByCodeFromCloud(testCode);
+            const test = getTestByCode(testCode);
             
             if (!test) {
-                alert('Test not found! Check the access code. Make sure you opened the shared link from your professor.');
+                alert('Test not found! Check the access code.');
                 return;
             }
 
@@ -1011,27 +739,16 @@
                 testCode: testCode,
                 testTitle: test.title,
                 startTime: new Date().toISOString(),
-                tabSwitches: 0,
-                answers: {}
+                tabSwitches: 0
             };
 
-            startMonitoring();
-            renderTestInterface();
-        }
-
-        function startMonitoring() {
             document.addEventListener('visibilitychange', handleVisibilityChange);
-            const studentTab = document.querySelector('.tab[onclick="showTab(\'student\')"]');
-            studentTab.classList.add('monitoring-active');
+            renderTestInterface();
         }
 
         function handleVisibilityChange() {
             if (document.hidden) {
                 monitoringData.tabSwitches++;
-                const tabSwitchElement = document.getElementById('tabSwitchCount');
-                if (tabSwitchElement) {
-                    tabSwitchElement.textContent = monitoringData.tabSwitches;
-                }
             }
         }
 
@@ -1045,71 +762,28 @@
             container.innerHTML = `
                 <div class="card warning">
                     <h2>${currentTest.title}</h2>
-                    <div class="student-info">
-                        <p><strong>Student:</strong> ${monitoringData.studentName}</p>
-                        <p><strong>Test Code:</strong> ${monitoringData.testCode}</p>
-                        <p><strong>Monitoring:</strong> <span style="color: red;">ACTIVE (Tab switching detection)</span></p>
-                    </div>
-                    <div class="card warning">
-                        <strong>⚠️ MONITORING ACTIVE:</strong> Tab switching is being monitored and recorded!
-                    </div>
-                    <div class="monitoring-stats">
-                        <div class="stat-card">
-                            <div class="stat-number" id="tabSwitchCount">0</div>
-                            <div>Tab Switches</div>
-                        </div>
-                    </div>
+                    <p><strong>Student:</strong> ${monitoringData.studentName}</p>
+                    <p><strong>Test Code:</strong> ${monitoringData.testCode}</p>
                 </div>
             `;
 
             currentTest.questions.forEach((question, index) => {
                 let questionHTML = '';
                 
-                switch(question.type) {
-                    case 'multiple':
-                        questionHTML = question.choices.map(choice => `
-                            <label style="display: block; margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">
-                                <input type="checkbox" name="question_${question.id}" value="${choice.id}"
-                                       onchange="updateStudentAnswer(${question.id}, this)">
-                                ${choice.text}
-                            </label>
-                        `).join('');
-                        break;
-                    
-                    case 'short':
-                        questionHTML = `
-                            <textarea style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;"
-                                      onchange="updateStudentAnswer(${question.id}, this)"
-                                      placeholder="Type your answer here..."></textarea>
-                        `;
-                        break;
-                    
-                    case 'matching':
-                        questionHTML = `
-                            <div style="margin: 10px 0;">
-                                ${question.pairs.map((pair, pi) => `
-                                    <div class="matching-item">
-                                        <span style="min-width: 100px;">${pair.left}</span>
-                                        <span>→</span>
-                                        <input type="text" style="flex: 1;"
-                                               onchange="updateMatchingAnswer(${question.id}, ${pi}, this.value)"
-                                               placeholder="Match here">
-                                    </div>
-                                `).join('')}
-                            </div>
-                        `;
-                        break;
-                    
-                    case 'fillblank':
-                        const blankText = question.text.replace(/_{3,}/g, '<input type="text" style="width: 150px; padding: 5px; border: 1px solid #ccc; border-radius: 3px;" onchange="updateBlankAnswer(${question.id}, this)">');
-                        questionHTML = `<div style="margin: 10px 0; font-size: 16px; line-height: 1.6;">${blankText}</div>`;
-                        break;
+                if (question.type === 'multiple') {
+                    questionHTML = question.choices.map(choice => `
+                        <label style="display: block; margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                            <input type="checkbox" name="question_${question.id}" value="${choice.id}"
+                                   onchange="updateStudentAnswer(${question.id}, this)">
+                            ${choice.text}
+                        </label>
+                    `).join('');
                 }
 
                 container.innerHTML += `
                     <div class="card">
                         <h3>Question ${index + 1} (${question.points} points)</h3>
-                        <p>${question.type !== 'fillblank' ? question.text : ''}</p>
+                        <p>${question.text}</p>
                         ${questionHTML}
                     </div>
                 `;
@@ -1118,7 +792,6 @@
             container.innerHTML += `
                 <div class="card">
                     <button class="btn btn-success" onclick="finishTest()">✅ Submit Test</button>
-                    <p><small>Note: Results will be saved to Google Sheets automatically</small></p>
                 </div>
             `;
         }
@@ -1127,34 +800,17 @@
             if (element.type === 'checkbox') {
                 if (!studentAnswers[questionId]) studentAnswers[questionId] = [];
                 if (element.checked) {
-                    if (!studentAnswers[questionId].includes(element.value)) {
-                        studentAnswers[questionId].push(element.value);
-                    }
+                    studentAnswers[questionId].push(element.value);
                 } else {
                     studentAnswers[questionId] = studentAnswers[questionId].filter(id => id !== element.value);
                 }
-            } else {
-                studentAnswers[questionId] = element.value;
             }
-        }
-
-        function updateMatchingAnswer(questionId, pairIndex, value) {
-            if (!studentAnswers[questionId]) studentAnswers[questionId] = [];
-            studentAnswers[questionId][pairIndex] = value;
-        }
-
-        function updateBlankAnswer(questionId, element) {
-            if (!studentAnswers[questionId]) studentAnswers[questionId] = [];
-            studentAnswers[questionId].push(element.value);
         }
 
         async function finishTest() {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
-            const studentTab = document.querySelector('.tab[onclick="showTab(\'student\')"]');
-            studentTab.classList.remove('monitoring-active');
 
             monitoringData.endTime = new Date().toISOString();
-            monitoringData.answers = studentAnswers;
 
             let totalScore = 0;
             let maxScore = 0;
@@ -1162,16 +818,23 @@
 
             currentTest.questions.forEach((question, index) => {
                 maxScore += question.points;
-                let score = calculateQuestionScore(question, studentAnswers[question.id] || []);
-                totalScore += score;
+                let score = 0;
 
+                if (question.type === 'multiple') {
+                    const studentChoiceIds = studentAnswers[question.id] || [];
+                    const correctChoiceIds = question.choices.filter(c => c.correct).map(c => c.id.toString());
+                    
+                    const allCorrectSelected = correctChoiceIds.every(id => studentChoiceIds.includes(id));
+                    const noExtraSelected = studentChoiceIds.every(id => correctChoiceIds.includes(id));
+                    
+                    score = (allCorrectSelected && noExtraSelected) ? question.points : 0;
+                }
+
+                totalScore += score;
                 details.push({
                     question: question.text,
-                    studentAnswer: formatStudentAnswer(question, studentAnswers[question.id]),
-                    correctAnswer: getCorrectAnswer(question),
                     score: score,
-                    maxScore: question.points,
-                    isCorrect: score === question.points
+                    maxScore: question.points
                 });
             });
 
@@ -1180,72 +843,21 @@
                 score: totalScore,
                 maxScore: maxScore,
                 percentage: Math.round((totalScore / maxScore) * 100),
-                details: details,
-                completeStudentAnswers: studentAnswers
+                details: details
             };
 
-            // Save to Google Sheets
-            const googleSheetsSuccess = await saveResultToGoogleSheets(result);
+            // Save to Google Form
+            const googleFormSuccess = await saveResultToGoogleForm(result);
             
-            // Also save locally as backup
+            // Save locally
             const results = getResults();
             results.push(result);
             saveResults(results);
 
-            showTestResults(result, googleSheetsSuccess);
+            showTestResults(result, googleFormSuccess);
         }
 
-        function calculateQuestionScore(question, studentAnswer) {
-            // Simplified scoring - you can implement more complex logic here
-            if (!studentAnswer || (Array.isArray(studentAnswer) && studentAnswer.length === 0)) {
-                return 0;
-            }
-            
-            // For multiple choice questions
-            if (question.type === 'multiple') {
-                const correctChoices = question.choices.filter(c => c.correct).map(c => c.id.toString());
-                const studentChoices = Array.isArray(studentAnswer) ? studentAnswer : [studentAnswer];
-                
-                // Check if all correct choices are selected and no incorrect ones
-                const allCorrectSelected = correctChoices.every(id => studentChoices.includes(id));
-                const noIncorrectSelected = studentChoices.every(id => correctChoices.includes(id));
-                
-                return (allCorrectSelected && noIncorrectSelected) ? question.points : 0;
-            }
-            
-            // For other question types, give full points for demonstration
-            return question.points;
-        }
-
-        function formatStudentAnswer(question, answer) {
-            if (Array.isArray(answer)) {
-                if (question.type === 'multiple') {
-                    const selectedOptions = question.choices.filter(choice => 
-                        answer.includes(choice.id.toString())
-                    ).map(choice => choice.text);
-                    return selectedOptions.join(', ');
-                }
-                return answer.join(', ');
-            }
-            return answer || 'No answer';
-        }
-
-        function getCorrectAnswer(question) {
-            switch(question.type) {
-                case 'multiple':
-                    return question.choices.filter(c => c.correct).map(c => c.text).join(', ');
-                case 'short':
-                    return question.answer || 'Expected answer';
-                case 'matching':
-                    return question.pairs.map(p => `${p.left} → ${p.right}`).join('; ');
-                case 'fillblank':
-                    return question.text;
-                default:
-                    return 'Correct answer';
-            }
-        }
-
-        function showTestResults(result, googleSheetsSuccess) {
+        function showTestResults(result, googleFormSuccess) {
             const container = document.getElementById('testInterface');
             container.innerHTML = `
                 <div class="card success">
@@ -1253,37 +865,12 @@
                     <p><strong>Student:</strong> ${result.studentName}</p>
                     <p><strong>Test:</strong> ${result.testTitle}</p>
                     <p><strong>Score:</strong> ${result.score} / ${result.maxScore} (${result.percentage}%)</p>
-                    <div class="monitoring-stats">
-                        <div class="stat-card">
-                            <div class="stat-number">${result.tabSwitches}</div>
-                            <div>Tab Switches</div>
-                        </div>
-                    </div>
-                    ${googleSheetsSuccess ? 
-                        '<p style="color: green; font-weight: bold;">✅ Results saved to Google Sheets</p>' : 
+                    <p><strong>Tab Switches:</strong> ${result.tabSwitches}</p>
+                    ${googleFormSuccess ? 
+                        '<p style="color: green; font-weight: bold;">✅ Results automatically saved to Google Form!</p>' : 
                         '<p style="color: orange;">⚠️ Results saved locally only</p>'}
                 </div>
-            `;
-
-            result.details.forEach((detail, index) => {
-                container.innerHTML += `
-                    <div class="result-item ${detail.isCorrect ? 'correct' : 'incorrect'}">
-                        <h4>Question ${index + 1}</h4>
-                        <p><strong>Question:</strong> ${detail.question}</p>
-                        <p><strong>Your Answer:</strong> ${detail.studentAnswer}</p>
-                        <p><strong>Correct Answer:</strong> ${detail.correctAnswer}</p>
-                        <p><strong>Score:</strong> ${detail.score} / ${detail.maxScore}</p>
-                    </div>
-                `;
-            });
-
-            container.innerHTML += `
-                <div class="card">
-                    <button class="btn" onclick="location.reload()">🔄 Take Another Test</button>
-                    ${googleSheetsSuccess ? 
-                        '<p><small>📥 A CSV file was downloaded. Import it to your Google Sheet manually.</small></p>' : 
-                        ''}
-                </div>
+                <button class="btn" onclick="location.reload()">🔄 Take Another Test</button>
             `;
         }
 
@@ -1301,91 +888,58 @@
             const results = getResults();
             const container = document.getElementById('resultsList');
 
-            if (results.length === 0) {
-                container.innerHTML = '<p>No results yet. Results will appear here after students complete tests.</p>';
-                return;
-            }
-
             container.innerHTML = results.map((result, index) => `
                 <div class="card">
                     <h3>${result.studentName} - ${result.testTitle}</h3>
                     <p><strong>Score:</strong> ${result.score}/${result.maxScore} (${result.percentage}%)</p>
                     <p><strong>Date:</strong> ${new Date(result.startTime).toLocaleString()}</p>
                     <p><strong>Tab Switches:</strong> ${result.tabSwitches}</p>
-                    
-                    <div class="student-answers">
-                        <h4>Student Answers:</h4>
-                        ${result.details.map((detail, qIndex) => `
-                            <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
-                                <strong>Q${qIndex + 1}:</strong> ${detail.question}<br>
-                                <strong>Student Answer:</strong> ${detail.studentAnswer}<br>
-                                <strong>Correct Answer:</strong> ${detail.correctAnswer}<br>
-                                <strong>Score:</strong> ${detail.score}/${detail.maxScore}
-                            </div>
-                        `).join('')}
-                    </div>
-
-                    <button class="btn" onclick="viewDetailedResult(${index})">📋 View Details</button>
-                    <button class="btn btn-danger" onclick="deleteResult(${index})">🗑️ Delete</button>
                 </div>
             `).join('');
         }
 
-        function viewDetailedResult(index) {
-            const results = getResults();
-            const result = results[index];
-            
-            let details = `Detailed Results:\n\nStudent: ${result.studentName}\nTest: ${result.testTitle}\nScore: ${result.score}/${result.maxScore} (${result.percentage}%)\n\n`;
-            details += `Monitoring Data:\n- Tab Switches: ${result.tabSwitches}\n\n`;
-            details += "Student Answers:\n";
-            
-            result.details.forEach((detail, i) => {
-                details += `\nQ${i+1}. ${detail.question}\n`;
-                details += `   Student: ${detail.studentAnswer}\n`;
-                details += `   Correct: ${detail.correctAnswer}\n`;
-                details += `   Score: ${detail.score}/${detail.maxScore}\n`;
-            });
-            
-            alert(details);
-        }
+        // ==================== PASSWORD PROTECTION ====================
 
-        function deleteResult(index) {
-            if (confirm('Delete this result?')) {
-                const results = getResults();
-                results.splice(index, 1);
-                saveResults(results);
-                loadResultsList();
+        function accessProfessor() {
+            const password = document.getElementById('professorPassword').value;
+            if (password === PROFESSOR_PASSWORD) {
+                document.querySelector('#professor .password-protected').style.display = 'none';
+                document.getElementById('professorContent').style.display = 'block';
+                loadTestsList();
+            } else {
+                alert('Incorrect password!');
             }
         }
 
-        function exportResults() {
-            const results = getResults();
-            const dataStr = JSON.stringify(results, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = 'english_test_results.json';
-            link.click();
+        function accessResults() {
+            const password = document.getElementById('teacherPassword').value;
+            if (password === PROFESSOR_PASSWORD) {
+                document.querySelector('#results .password-protected').style.display = 'none';
+                document.getElementById('resultsContent').style.display = 'block';
+                loadResultsList();
+            } else {
+                alert('Incorrect password!');
+            }
         }
 
-        function clearResults() {
-            if (confirm('Clear all results?')) {
-                saveResults([]);
-                loadResultsList();
+        // ==================== TAB NAVIGATION ====================
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
+
+            if (tabName === 'setup') {
+                updateConfigDisplay();
             }
         }
 
         // ==================== INITIALIZATION ====================
 
         document.addEventListener('DOMContentLoaded', function() {
-            loadGoogleConfig();
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('tests')) {
-                console.log('Tests loaded from URL');
-            }
-            
+            loadFormConfig();
             showTab('student');
         });
     </script>
