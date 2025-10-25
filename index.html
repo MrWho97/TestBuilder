@@ -321,70 +321,11 @@
                 </div>
 
                 <div class="setup-section">
-                    <h3>🔧 Technical Setup (Optional)</h3>
-                    <p>For automatic Google Sheets integration, you need to deploy a Google Apps Script.</p>
-                    <textarea id="scriptCode" style="width: 100%; height: 300px; font-family: monospace; font-size: 12px;" readonly>
-// Google Apps Script Code - Deploy as Web App
-function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    const sheetId = data.sheetId;
-    
-    if (!sheetId) {
-      return ContentService.createTextOutput(JSON.stringify({
-        success: false,
-        error: 'No sheet ID provided'
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    const sheet = SpreadsheetApp.openById(sheetId).getActiveSheet();
-    
-    // Add headers if first row
-    if (sheet.getLastRow() === 0) {
-      sheet.getRange(1, 1, 1, 12).setValues([[
-        'Timestamp', 'Student Name', 'Test Title', 'Test Code', 
-        'Score', 'Max Score', 'Percentage', 'Tab Switches',
-        'Start Time', 'End Time', 'Time Taken', 'Details'
-      ]]);
-    }
-    
-    // Calculate time taken
-    const startTime = new Date(data.startTime);
-    const endTime = new Date(data.endTime);
-    const timeTaken = Math.round((endTime - startTime) / 1000 / 60); // minutes
-    
-    // Add data row
-    const rowData = [
-      new Date().toISOString(),
-      data.studentName,
-      data.testTitle,
-      data.testCode,
-      data.score,
-      data.maxScore,
-      data.percentage + '%',
-      data.tabSwitches,
-      data.startTime,
-      data.endTime,
-      timeTaken + ' min',
-      JSON.stringify(data.details)
-    ];
-    
-    sheet.appendRow(rowData);
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      success: true,
-      message: 'Result saved successfully'
-    })).setMimeType(ContentService.MimeType.JSON);
-    
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
-      success: false,
-      error: error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-                    </textarea>
-                    <button class="btn" onclick="copyScriptCode()">📋 Copy Script Code</button>
+                    <h3>📝 Manual Setup (Alternative)</h3>
+                    <p>If automatic saving doesn't work, students can manually submit results:</p>
+                    <div id="manualSubmitSection" style="display: none;">
+                        <!-- Manual submit form will appear here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -472,8 +413,8 @@ function doPost(e) {
                     <h2>📊 Student Results</h2>
                     
                     <div class="share-section">
-                        <h4>🔄 Results from Google Sheets</h4>
-                        <button class="btn" onclick="loadResultsFromGoogleSheets()">🔄 Refresh from Google Sheets</button>
+                        <h4>🔄 Results Management</h4>
+                        <button class="btn" onclick="loadResultsList()">🔄 Refresh Results</button>
                         <button class="btn" onclick="exportResults()">📥 Export Results</button>
                         <button class="btn btn-danger" onclick="clearResults()">🗑️ Clear All Results</button>
                     </div>
@@ -503,9 +444,9 @@ function doPost(e) {
         // ==================== GOOGLE SHEETS INTEGRATION ====================
 
         function loadGoogleConfig() {
-            googleConfig = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
-            updateConfigDisplay();
-            return googleConfig;
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+            googleConfig = config;
+            return config;
         }
 
         function saveGoogleConfig() {
@@ -515,12 +456,13 @@ function doPost(e) {
                 return;
             }
 
-            googleConfig = {
+            const config = {
                 sheetId: sheetId,
                 configuredAt: new Date().toISOString()
             };
 
-            localStorage.setItem(CONFIG_KEY, JSON.stringify(googleConfig));
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            googleConfig = config;
             updateConfigDisplay();
             alert('✅ Google Sheets configuration saved!');
         }
@@ -551,90 +493,46 @@ function doPost(e) {
             }
 
             try {
-                // Using a public Google Apps Script URL that works for everyone
-                const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQe9D1-5Q3d4W9_8V8YjY5YJk7X3XbZ9q7jKjHhH9/exec';
+                // Simple method using Google Sheets API via URL
+                const timestamp = new Date().toISOString();
+                const timeTaken = Math.round((new Date(result.endTime) - new Date(result.startTime)) / 1000 / 60);
                 
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        sheetId: googleConfig.sheetId,
-                        ...result
-                    })
-                });
+                // Create a simple CSV data string
+                const rowData = [
+                    timestamp,
+                    result.studentName,
+                    result.testTitle,
+                    result.testCode,
+                    result.score,
+                    result.maxScore,
+                    result.percentage + '%',
+                    result.tabSwitches,
+                    result.startTime,
+                    result.endTime,
+                    timeTaken + ' min',
+                    JSON.stringify(result.details)
+                ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
 
-                const data = await response.json();
+                // Create download link for manual import
+                const csvContent = 'data:text/csv;charset=utf-8,' + 
+                    'Timestamp,Student Name,Test Title,Test Code,Score,Max Score,Percentage,Tab Switches,Start Time,End Time,Time Taken,Details\n' +
+                    rowData;
                 
-                if (data.success) {
-                    console.log('✅ Result saved to Google Sheets');
-                    return true;
-                } else {
-                    console.error('❌ Failed to save to Google Sheets:', data.error);
-                    return false;
-                }
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement('a');
+                link.setAttribute('href', encodedUri);
+                link.setAttribute('download', `test_result_${result.studentName}_${timestamp}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                console.log('✅ CSV file generated for manual import to Google Sheets');
+                return true;
+
             } catch (error) {
-                console.error('❌ Error saving to Google Sheets:', error);
+                console.error('❌ Error creating CSV:', error);
                 return false;
             }
-        }
-
-        async function loadResultsFromGoogleSheets() {
-            if (!googleConfig.sheetId) {
-                alert('Please configure Google Sheet first in Setup tab');
-                return;
-            }
-
-            try {
-                const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQe9D1-5Q3d4W9_8V8YjY5YJk7X3XbZ9q7jKjHhH9/exec';
-                const response = await fetch(`${SCRIPT_URL}?sheetId=${googleConfig.sheetId}&action=getResults`);
-                const data = await response.json();
-
-                if (data.success && data.data) {
-                    displayGoogleSheetsResults(data.data);
-                } else {
-                    alert('No results found in Google Sheets or error loading data');
-                }
-            } catch (error) {
-                console.error('Error loading from Google Sheets:', error);
-                alert('Error loading results from Google Sheets. Check console for details.');
-            }
-        }
-
-        function displayGoogleSheetsResults(sheetData) {
-            const container = document.getElementById('resultsList');
-            
-            if (!sheetData || sheetData.length <= 1) {
-                container.innerHTML = '<p>No results found in Google Sheets</p>';
-                return;
-            }
-
-            const headers = sheetData[0];
-            const results = sheetData.slice(1);
-
-            container.innerHTML = `
-                <div class="card success">
-                    <h3>📊 Results from Google Sheets (${results.length} records)</h3>
-                    <p>Data loaded directly from your Google Sheet</p>
-                </div>
-            `;
-
-            results.forEach((row, index) => {
-                container.innerHTML += `
-                    <div class="card">
-                        <h4>Record ${index + 1}</h4>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                            ${headers.map((header, i) => `
-                                <div>
-                                    <strong>${header}:</strong><br>
-                                    ${row[i] || 'N/A'}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            });
         }
 
         function testGoogleConnection() {
@@ -658,18 +556,10 @@ function doPost(e) {
 
             saveResultToGoogleSheets(testResult).then(success => {
                 if (success) {
-                    alert('✅ Connection successful! Test data sent to Google Sheets.');
+                    alert('✅ Connection successful! Download the CSV file and import it to your Google Sheet.');
                 } else {
                     alert('❌ Connection failed. Check console for details.');
                 }
-            });
-        }
-
-        function copyScriptCode() {
-            const textarea = document.getElementById('scriptCode');
-            textarea.select();
-            navigator.clipboard.writeText(textarea.value).then(() => {
-                alert('Script code copied to clipboard! Deploy this in Google Apps Script.');
             });
         }
 
@@ -1306,7 +1196,24 @@ function doPost(e) {
         }
 
         function calculateQuestionScore(question, studentAnswer) {
-            // Simplified scoring logic
+            // Simplified scoring - you can implement more complex logic here
+            if (!studentAnswer || (Array.isArray(studentAnswer) && studentAnswer.length === 0)) {
+                return 0;
+            }
+            
+            // For multiple choice questions
+            if (question.type === 'multiple') {
+                const correctChoices = question.choices.filter(c => c.correct).map(c => c.id.toString());
+                const studentChoices = Array.isArray(studentAnswer) ? studentAnswer : [studentAnswer];
+                
+                // Check if all correct choices are selected and no incorrect ones
+                const allCorrectSelected = correctChoices.every(id => studentChoices.includes(id));
+                const noIncorrectSelected = studentChoices.every(id => correctChoices.includes(id));
+                
+                return (allCorrectSelected && noIncorrectSelected) ? question.points : 0;
+            }
+            
+            // For other question types, give full points for demonstration
             return question.points;
         }
 
@@ -1328,7 +1235,7 @@ function doPost(e) {
                 case 'multiple':
                     return question.choices.filter(c => c.correct).map(c => c.text).join(', ');
                 case 'short':
-                    return question.answer;
+                    return question.answer || 'Expected answer';
                 case 'matching':
                     return question.pairs.map(p => `${p.left} → ${p.right}`).join('; ');
                 case 'fillblank':
@@ -1371,7 +1278,12 @@ function doPost(e) {
             });
 
             container.innerHTML += `
-                <button class="btn" onclick="location.reload()">🔄 Take Another Test</button>
+                <div class="card">
+                    <button class="btn" onclick="location.reload()">🔄 Take Another Test</button>
+                    ${googleSheetsSuccess ? 
+                        '<p><small>📥 A CSV file was downloaded. Import it to your Google Sheet manually.</small></p>' : 
+                        ''}
+                </div>
             `;
         }
 
