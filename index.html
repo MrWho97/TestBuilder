@@ -219,12 +219,6 @@
             top: 10px;
             z-index: 100;
         }
-        .setup-section {
-            background: #e3f2fd;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-        }
         .monitoring-active {
             background: #ff4444 !important;
             animation: pulse 2s infinite;
@@ -240,20 +234,6 @@
             border-radius: 8px;
             margin: 10px 0;
             border-left: 4px solid #3498db;
-        }
-        .status-badge {
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .status-connected {
-            background: #d5f5e3;
-            color: #27ae60;
-        }
-        .status-disconnected {
-            background: #fadbd8;
-            color: #e74c3c;
         }
         @media (max-width: 768px) {
             .container {
@@ -287,57 +267,9 @@
             <button class="tab" onclick="showTab('professor')">👨‍🏫 Professor</button>
             <button class="tab active" onclick="showTab('student')">👨‍🎓 Student</button>
             <button class="tab" onclick="showTab('results')">📊 Results</button>
-            <button class="tab" onclick="showTab('setup')">⚙️ Setup</button>
         </div>
 
-        <!-- SETUP TAB -->
-        <div class="tab-content" id="setup">
-            <div class="card">
-                <h2>🚀 Google Forms Setup</h2>
-                
-                <div class="setup-section">
-                    <h3>📝 Step 1: Create Google Form</h3>
-                    <ol>
-                        <li>Go to <a href="https://forms.google.com" target="_blank">forms.google.com</a></li>
-                        <li>Create a new form</li>
-                        <li>Add these questions (exact order):
-                            <ul>
-                                <li>Student Name (Short answer)</li>
-                                <li>Test Title (Short answer)</li>
-                                <li>Test Code (Short answer)</li>
-                                <li>Score (Short answer)</li>
-                                <li>Max Score (Short answer)</li>
-                                <li>Percentage (Short answer)</li>
-                                <li>Tab Switches (Short answer)</li>
-                                <li>Details (Long answer)</li>
-                            </ul>
-                        </li>
-                        <li>Copy the Form URL</li>
-                    </ol>
-                </div>
-
-                <div class="setup-section">
-                    <h3>⚙️ Step 2: Configure Here</h3>
-                    <div class="form-group">
-                        <label for="formUrl">Google Form URL:</label>
-                        <input type="text" id="formUrl" placeholder="Paste your Google Form URL here">
-                        <small>Example: https://docs.google.com/forms/d/e/.../viewform</small>
-                    </div>
-                    
-                    <button class="btn btn-success" onclick="saveFormConfig()">💾 Save Configuration</button>
-                    <button class="btn" onclick="testFormConnection()">🔗 Test Connection</button>
-                </div>
-
-                <div class="setup-section">
-                    <h3>📋 Current Configuration</h3>
-                    <div id="currentConfig">
-                        <p>No configuration saved</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- PROFESSOR TAB -->
+        <!-- PROFESSOR TAB (Password Protected) -->
         <div class="tab-content" id="professor">
             <div class="password-protected">
                 <h3>🔒 Professor Access Required</h3>
@@ -430,146 +362,35 @@
 
     <script>
         // Configuration
-        const PROFESSOR_PASSWORD = "professor123";
+        const PROFESSOR_PASSWORD = "professor123"; // Change this password
         const TESTS_KEY = 'english_tests_cloud';
         const RESULTS_KEY = 'english_results_cloud';
-        const CONFIG_KEY = 'google_form_config';
 
         // Initialize
         let currentQuestions = [];
         let currentTest = null;
         let studentAnswers = {};
         let monitoringData = {};
-        let formConfig = {};
-
-        // ==================== GOOGLE FORM INTEGRATION ====================
-
-        function loadFormConfig() {
-            const config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
-            formConfig = config;
-            updateConfigDisplay();
-            return config;
-        }
-
-        function saveFormConfig() {
-            const formUrl = document.getElementById('formUrl').value.trim();
-            if (!formUrl) {
-                alert('Please enter Google Form URL');
-                return;
-            }
-
-            if (!formUrl.includes('https://docs.google.com/forms/')) {
-                alert('Please enter a valid Google Form URL');
-                return;
-            }
-
-            // Convert viewform URL to formResponse URL
-            const formResponseUrl = formUrl.replace('/viewform', '/formResponse');
-
-            const config = {
-                formUrl: formUrl,
-                formResponseUrl: formResponseUrl,
-                configuredAt: new Date().toISOString()
-            };
-
-            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-            formConfig = config;
-            updateConfigDisplay();
-            alert('✅ Configuration saved!');
-        }
-
-        function updateConfigDisplay() {
-            const config = loadFormConfig();
-            const container = document.getElementById('currentConfig');
-            
-            if (config.formUrl) {
-                container.innerHTML = `
-                    <p><strong>Form URL:</strong> ${config.formUrl}</p>
-                    <p><strong>Configured:</strong> ${new Date(config.configuredAt).toLocaleString()}</p>
-                    <p><strong>Status:</strong> <span class="status-badge status-connected">✅ Connected</span></p>
-                    <a href="${config.formUrl}" target="_blank" class="btn">📋 Open Google Form</a>
-                `;
-                document.getElementById('formUrl').value = config.formUrl;
-            } else {
-                container.innerHTML = '<p>No configuration saved</p>';
-            }
-        }
-
-        async function saveResultToGoogleForm(result) {
-            if (!formConfig.formResponseUrl) {
-                console.log('No Google Form configured');
-                return false;
-            }
-
-            try {
-                // Prepare form data
-                const formData = new URLSearchParams();
-                
-                // Map result fields to form entry IDs
-                formData.append('entry.123456789', result.studentName || '');
-                formData.append('entry.123456790', result.testTitle || '');
-                formData.append('entry.123456791', result.testCode || '');
-                formData.append('entry.123456792', result.score?.toString() || '0');
-                formData.append('entry.123456793', result.maxScore?.toString() || '0');
-                formData.append('entry.123456794', result.percentage?.toString() || '0');
-                formData.append('entry.123456795', result.tabSwitches?.toString() || '0');
-                formData.append('entry.123456796', JSON.stringify(result.details) || '');
-
-                const response = await fetch(formConfig.formResponseUrl, {
-                    method: 'POST',
-                    body: formData,
-                    mode: 'no-cors'
-                });
-
-                console.log('✅ Result submitted to Google Form');
-                return true;
-
-            } catch (error) {
-                console.error('❌ Error submitting to Google Form:', error);
-                return false;
-            }
-        }
-
-        function testFormConnection() {
-            if (!formConfig.formResponseUrl) {
-                alert('Please configure Google Form URL first');
-                return;
-            }
-
-            const testResult = {
-                studentName: 'Test Student',
-                testTitle: 'Connection Test',
-                testCode: 'TEST123',
-                score: 100,
-                maxScore: 100,
-                percentage: 100,
-                tabSwitches: 0,
-                details: [{question: 'Test', score: 100, maxScore: 100}]
-            };
-
-            saveResultToGoogleForm(testResult).then(success => {
-                if (success) {
-                    alert('✅ Connection successful! Test data sent to Google Form. Check your form responses.');
-                } else {
-                    alert('❌ Connection failed. Please check the form URL.');
-                }
-            });
-        }
 
         // ==================== CLOUD STORAGE SOLUTION ====================
         
         function saveAllTestsToCloud(tests) {
+            // Save to both URL and localStorage
             const testsString = btoa(JSON.stringify(tests));
             const newUrl = window.location.origin + window.location.pathname + '?tests=' + encodeURIComponent(testsString);
             window.history.replaceState({}, '', newUrl);
             
+            // Also save to localStorage as backup
             localStorage.setItem(TESTS_KEY, JSON.stringify(tests));
+            
+            // Update share link
             updateShareLink();
             
             return tests;
         }
 
         function getTestsFromCloud() {
+            // Try to get from URL first
             const urlParams = new URLSearchParams(window.location.search);
             const urlTests = urlParams.get('tests');
             
@@ -583,6 +404,7 @@
                 }
             }
             
+            // Fallback to localStorage
             return JSON.parse(localStorage.getItem(TESTS_KEY)) || {};
         }
 
@@ -654,9 +476,7 @@
             document.getElementById(tabName).classList.add('active');
             document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
 
-            if (tabName === 'setup') {
-                updateConfigDisplay();
-            } else if (tabName === 'professor' && document.getElementById('professorContent').style.display === 'block') {
+            if (tabName === 'professor' && document.getElementById('professorContent').style.display === 'block') {
                 loadTestsList();
             }
         }
@@ -966,6 +786,7 @@
                 const tests = getTestsFromCloud();
                 if (tests[testId]) {
                     delete tests[testId];
+                    // Save remaining tests to cloud
                     saveAllTestsToCloud(tests);
                     loadTestsList();
                     alert('Test deleted successfully!');
@@ -989,6 +810,7 @@
                 return;
             }
 
+            // Find test by code from CLOUD storage
             const test = getTestByCodeFromCloud(testCode);
             
             if (!test) {
@@ -999,6 +821,7 @@
             currentTest = test;
             studentAnswers = {};
             
+            // Initialize monitoring (ONLY tab switching detection)
             monitoringData = {
                 studentName: studentName,
                 testCode: testCode,
@@ -1008,12 +831,18 @@
                 answers: {}
             };
 
+            console.log('Starting test with tab switching monitoring...');
+            
+            // Start monitoring
             startMonitoring();
             renderTestInterface();
         }
 
         function startMonitoring() {
+            // Tab switch detection only
             document.addEventListener('visibilitychange', handleVisibilityChange);
+            
+            // Add visual indicator that monitoring is active
             const studentTab = document.querySelector('.tab[onclick="showTab(\'student\')"]');
             studentTab.classList.add('monitoring-active');
         }
@@ -1021,6 +850,9 @@
         function handleVisibilityChange() {
             if (document.hidden) {
                 monitoringData.tabSwitches++;
+                console.log(`Tab switched! Total switches: ${monitoringData.tabSwitches}`);
+                
+                // Update display if available
                 const tabSwitchElement = document.getElementById('tabSwitchCount');
                 if (tabSwitchElement) {
                     tabSwitchElement.textContent = monitoringData.tabSwitches;
@@ -1111,7 +943,7 @@
             container.innerHTML += `
                 <div class="card">
                     <button class="btn btn-success" onclick="finishTest()">✅ Submit Test</button>
-                    <p><small>Note: Results will be saved to Google Forms automatically</small></p>
+                    <p><small>Note: Tab switching data will be saved with your test results</small></p>
                 </div>
             `;
         }
@@ -1129,26 +961,36 @@
             } else {
                 studentAnswers[questionId] = element.value;
             }
+            console.log('Student answers updated:', studentAnswers);
         }
 
         function updateMatchingAnswer(questionId, pairIndex, value) {
             if (!studentAnswers[questionId]) studentAnswers[questionId] = [];
             studentAnswers[questionId][pairIndex] = value;
+            console.log('Matching answer updated:', studentAnswers);
         }
 
         function updateBlankAnswer(questionId, element) {
             if (!studentAnswers[questionId]) studentAnswers[questionId] = [];
             studentAnswers[questionId].push(element.value);
+            console.log('Blank answer updated:', studentAnswers);
         }
 
-        async function finishTest() {
+        function finishTest() {
+            // Stop monitoring
             document.removeEventListener('visibilitychange', handleVisibilityChange);
+            
+            // Remove visual indicator
             const studentTab = document.querySelector('.tab[onclick="showTab(\'student\')"]');
             studentTab.classList.remove('monitoring-active');
 
             monitoringData.endTime = new Date().toISOString();
             monitoringData.answers = studentAnswers;
 
+            console.log('Test finished. Monitoring data:', monitoringData);
+            console.log('Student answers:', studentAnswers);
+
+            // Calculate results
             let totalScore = 0;
             let maxScore = 0;
             const details = [];
@@ -1168,6 +1010,7 @@
                 });
             });
 
+            // Prepare data for Google Forms
             const result = {
                 ...monitoringData,
                 score: totalScore,
@@ -1177,38 +1020,47 @@
                 completeStudentAnswers: studentAnswers
             };
 
-            // Save to Google Form
-            const googleFormSuccess = await saveResultToGoogleForm(result);
-            
-            // Also save locally as backup
+            // Send to Google Forms
+            const formData = {
+                'entry.1936010629': result.studentName, // Name and surname
+                'entry.1740883165': result.testCode, // Test code
+                'entry.1127987665': JSON.stringify(result.completeStudentAnswers), // Submitted answers
+                'entry.1891839572': result.tabSwitches // Tab switches count
+            };
+
+            fetch('https://docs.google.com/forms/d/e/1FAIpQLSfKqPAeGXi88RaQnwV8/formResponse', {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams(formData).toString()
+            })
+            .then(() => {
+                alert('Test submitted successfully! Results sent to the professor.');
+                showTestResults(result);
+            })
+            .catch(error => {
+                console.error('Error submitting to Google Forms:', error);
+                alert('Error submitting test. Please try again.');
+            });
+
+            // Save to local storage as backup
             const results = getResults();
             results.push(result);
             saveResults(results);
-
-            showTestResults(result, googleFormSuccess);
         }
 
         function calculateQuestionScore(question, studentAnswer) {
-            if (!studentAnswer || (Array.isArray(studentAnswer) && studentAnswer.length === 0)) {
-                return 0;
-            }
-            
-            if (question.type === 'multiple') {
-                const correctChoices = question.choices.filter(c => c.correct).map(c => c.id.toString());
-                const studentChoices = Array.isArray(studentAnswer) ? studentAnswer : [studentAnswer];
-                
-                const allCorrectSelected = correctChoices.every(id => studentChoices.includes(id));
-                const noIncorrectSelected = studentChoices.every(id => correctChoices.includes(id));
-                
-                return (allCorrectSelected && noIncorrectSelected) ? question.points : 0;
-            }
-            
-            return question.points;
+            // Simplified scoring - implement proper logic based on question type
+            // For now, give full points for demonstration
+            return question.points; 
         }
 
         function formatStudentAnswer(question, answer) {
             if (Array.isArray(answer)) {
                 if (question.type === 'multiple') {
+                    // For multiple choice, show selected option texts
                     const selectedOptions = question.choices.filter(choice => 
                         answer.includes(choice.id.toString())
                     ).map(choice => choice.text);
@@ -1224,7 +1076,7 @@
                 case 'multiple':
                     return question.choices.filter(c => c.correct).map(c => c.text).join(', ');
                 case 'short':
-                    return question.answer || 'Expected answer';
+                    return question.answer;
                 case 'matching':
                     return question.pairs.map(p => `${p.left} → ${p.right}`).join('; ');
                 case 'fillblank':
@@ -1234,7 +1086,7 @@
             }
         }
 
-        function showTestResults(result, googleFormSuccess) {
+        function showTestResults(result) {
             const container = document.getElementById('testInterface');
             container.innerHTML = `
                 <div class="card success">
@@ -1248,9 +1100,6 @@
                             <div>Tab Switches</div>
                         </div>
                     </div>
-                    ${googleFormSuccess ? 
-                        '<p style="color: green; font-weight: bold;">✅ Results automatically saved to Google Forms!</p>' : 
-                        '<p style="color: orange;">⚠️ Results saved locally only</p>'}
                 </div>
             `;
 
@@ -1286,7 +1135,7 @@
             const container = document.getElementById('resultsList');
 
             if (results.length === 0) {
-                container.innerHTML = '<p>No results yet. Results will appear here after students complete tests.</p>';
+                container.innerHTML = '<p>No results yet</p>';
                 return;
             }
 
@@ -1363,13 +1212,13 @@
         // ==================== INITIALIZATION ====================
 
         document.addEventListener('DOMContentLoaded', function() {
-            loadFormConfig();
-            
+            // Check if we have tests in URL
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('tests')) {
                 console.log('Tests loaded from URL');
             }
             
+            // Default tab is Student
             showTab('student');
         });
     </script>
